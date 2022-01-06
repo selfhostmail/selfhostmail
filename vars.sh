@@ -4,8 +4,11 @@
 export facter_le_email='your_real_email@for_lets_encrypt.com'           # Lets Encrypt Email, must be real and active!
 # Your primary domain of which your fqdn is most likely a part.
 export facter_my_domain='example.org'
+
+# Choose one of the three.
 export facter_wg_client_enabled='false'
-export facter_wg_server_enabled='true'
+export facter_firezone_enabled='false'
+export facter_headscale_enabled='true'
 export facter_wg_server_port=51820
 # First User - with default settings this works out to adminuser@example.org.
 export facter_admin_user='adminuser'
@@ -23,12 +26,19 @@ export facter_fz_password=`mktemp -u XXXXXXXXXXXXXXXXXXXXXX`
 #export facter_fz_password='postgres'
 export facter_fz_db='firezone'                 # Database name for postfix
 
+# Headscale settings
+export facter_hs_user='headscale'
+export facter_hs_password=`mktemp -u XXXXXXXXXXXXXXXXXXXXXX`
+export facter_hs_db='headscale'
+
+
 ### Optional change items
 
 # Set to false if you want to disable the internal DNS
 export facter_dns_enable='true'
 # Change to true if you want FreeDNS secondaries to mirror your domain
 export facter_freedns_secondary='true'
+export facter_dns_upstream='1.1.1.1'
 
 # Add array items here if you have more domains, CSV please on this one
 
