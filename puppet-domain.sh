@@ -1,9 +1,15 @@
 #!/bin/bash
 
 export FIRST_RUN=false
+export log_dir='/root/puppet_logs'
+mkdir -p ${log_dir}
 
 if ! [ -e /root/.puppet_domain ]; then
     FIRST_RUN=true
+fi
+
+if [ -e ${log_dir}/build_log ]; then
+    mv ${log_dir}/build_log ${log_dir}/build_log-`date +%Y%m%d-%T`
 fi
 
 source ./vars.sh
@@ -69,29 +75,30 @@ export facter_admin_password=$(doveadm pw -s BLF-CRYPT -p ${admin_password})
 ### - run puppet
 
 step_print "Installing system pre-requisites (nginx/certs/spam/AV).."
-puppet apply -l /root/build_logs ${exec_dir}/prereq.pp
+puppet apply -l ${log_dir}/build_log ${exec_dir}/prereq.pp
 step_print "Installing postgres and setting up schemas and rights.."
-puppet apply -l /root/build_logs ${exec_dir}/database.pp
+puppet apply -l ${log_dir}/build_log ${exec_dir}/database.pp
 step_print "Installing wireguard services (if enabled).."
-puppet apply -l /root/build_logs ${exec_dir}/wireguard.pp
-step_print "Installing postfix/dovecot services.."
-puppet apply -l /root/build_logs ${exec_dir}/postfix.pp
+puppet apply -l ${log_dir}/build_log ${exec_dir}/wireguard.pp
+step_print "Installing postfix/dovecot services and seeding initial tables.."
+puppet apply -l ${log_dir}/build_log ${exec_dir}/postfix.pp
 if [ $facter_dns_enable == 'true' ]; then
-    step_print "Configuring bind9 and setting up keys.."
+    step_print "Installing bind9 and setting up keys.."
     puppet apply ${exec_dir}/dns.pp
 fi
 
-step_print "Done!\n"
+step_print "Done!\n\n\n"
 
 if [ $FIRST_RUN == 'true' ]; then
     if [ $facter_wg_server_enabled == 'true' ]; then
-        msg_print "You will need to run 'firezone-ctl create-or-reset-admin' to enable the account for ${facter_admin_user}@${facter_my_domain}. The password will be displayed on your screen and is different than your email password.\n"
+        msg_print "You will need to run \e[1m'firezone-ctl create-or-reset-admin'\e[0m to enable the account for ${facter_admin_user}@${facter_my_domain}. The password will be displayed on your screen and is different than your email password.\n"
     fi
     if [ $facter_dns_enable == 'true' ]; then
         msg_print "You can now use this server as an authoritative domain for:\n${facter_my_domain}\n"
         if ! [ -z $facter_my_other_domains ]; then
             msg_print "You can also use this server as an authoritative domain for:\n${facter_my_other_domains}\n"
         fi
+        msg_print "The following txt files contain the DNSSEC records you'll need to add at your upstream provider: $(ls /root/DS_FOR_REGISTRAR_*) - DNSSEC will not have a full chain of trust until you do."
     else
         msg_print "In order for DKIM to work, you'll need to add the following TXT record to your domain:\n\n$(cat /etc/opendkim/keys/${facter_my_domain}/`date +%Y%m%d`.txt)\n"
         msg_print "And an spf record similar to this will work: 'v=spf1 +mx a:${HOSTNAME} -all' though you can replace the hostname with your IP for less DNS lookups."
