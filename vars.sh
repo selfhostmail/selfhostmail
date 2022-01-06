@@ -36,8 +36,8 @@ export facter_freedns_secondary='true'
 export facter_my_other_domains=''
 export facter_update_dns='true'
 # Want to add in a custom record? Create a facter export like so with a | separating the records. change example_com to your domain like sub_example_com or myfancydomain_org
-export facter_example_com_records='ns3      IN    A       10.1.1.1|www     IN    A    1.1.1.1|@    IN     TXT   "my=asmeo,too=asdasj"'
+export facter_example_com_records="ns3      IN    A       10.1.1.1|www     IN    A    1.1.1.1|@    IN     TXT   \"my='asmeo',too=asdasj, q=1\""
 
-# Used as root for getting vendored (fixed) puppet modules
+# Used as root for getting forked (fixed) puppet modules - NOT the repo you got the script from! Hopefully the PRs will be merged and I can remove the forked modules.
 export github_project="https://github.com/colonelpanik/"
 

@@ -49,6 +49,7 @@ done
 
 step_print "Running - please be patient, this can take up to 10 minutes (or more!) on slower systems...."
 
+step_print "Checking for previous config..."
 import_settings
 
 if [ "${u}" == 'true' ]; then
