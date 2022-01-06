@@ -52,8 +52,8 @@ If you need customizations to the stack, I recommend forking this project and co
    - At least 4GB RAM - this can be a 1CPU/1GB RAM VPS but you'll need to give it a swapfile.
    - An FQDN that is reachable via FQDN for the domain you'll want to host.
      - e.g. step 1, buy domain, step 2, spin up host, step 3, add A record in domain registrar to make sure host is accessible
-2. Edit the puppet-domain.sh script and set variables as you want
-   - At a minimum you'll need to set the 'my_domain' and 'le_email' variables as the script will not work unless these two are set to match reality.
+2. Edit the vars.sh file and set variables as you want
+   - At a minimum you'll need to set the 'facter_my_domain' and 'facter_le_email' variables as the script will not work unless these two are set to match reality.
 3. Run the script, *as root*:
 ```bash
 cd /root
@@ -61,12 +61,16 @@ dnf install --assumeyes git
 git clone https://github.com/colonelpanik/self-host-puppet.git
 cd self-host-puppet
 
-# from here, edit at least the le_email and my_domain variable in puppet-domain.sh or via cli for contactless install
+# from here, edit at least the le_email and my_domain variable in puppet-domain.sh
+bash ./puppet-domain.sh
 
+#or via cli for contactless install
 bash ./puppet-domain.sh -l myemail@yahoo.com -d myfancydomain.com -p adminpassword
 ```
 
-I use this to host my own mail/domain services so I hope you have a clean installation. Please enter an issue if there is a problem!
+The settings are stored in a /root/.puppet_domain file. Warning, removing this file will 'reset' the script and it will create new passwords for your postgres users!
+
+I use this to host my own mail/domain/wg services so I hope you have a clean installation. Please enter an issue if there is a problem!
 
 Note, this has only been tested and will be support on a 'clean' freshly installed cloud system. I'm sure it works elsewhere assuming you have FQDN naming/records set up as expected and are running on a RHEL compatible distro and haven't fscked your base OS.
 
