@@ -53,8 +53,10 @@ step_print "Checking for previous config..."
 import_settings
 
 if [ "${u}" == 'true' ]; then
+  step_print" *** Explicitly running the DNS zone updates/key generation"
   facter_update_dns=true
 elif [ "${u}" == 'false' ]; then
+  step_print" *** Explicitly NOT running the DNS zone updates/key generation"
   facter_update_dns=false
 fi
 
