@@ -34,7 +34,7 @@ $virtalias_table_cmd  = "CREATE TABLE virtual_aliases(id SERIAL PRIMARY KEY, vir
 $virtalias_unless     = "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'virtual_aliases'"
 $insert_domain_cmd    = "INSERT INTO virtual_domains (virtual_domain, host, active) VALUES ('${facts['my_domain']}', '${facts['fqdn']}', 'true')"
 $insert_domain_unless = "SELECT 1 FROM virtual_domains WHERE virtual_domain = '${facts['my_domain']}'"
-$insert_admin_cmd     = "INSERT INTO virtual_users (id,virtual_domain_id,password,email,maildir) VALUES ('1', '1', '${admin_password}', '${admin_email}', '${facts['admin_user']}');"
+$insert_admin_cmd     = "INSERT INTO virtual_users (id,virtual_domain_id,password,email,maildir) VALUES ('1', '1', '${admin_password}', '${admin_email}', '${facts['admin_user']}/');"
 $insert_admin_unless  = "SELECT 1 FROM virtual_users WHERE email = '${admin_email}'"
 $insert_adminban_cmd  = "INSERT INTO virtual_aliases (virtual_domain_id,source,destination) VALUES ('1', 'fail2ban@${facts['my_domain']}', '${admin_email}');"
 $insert_adminban_unless = "SELECT 1 FROM virtual_aliases where source = 'fail2ban@${facts['my_domain']}'"
