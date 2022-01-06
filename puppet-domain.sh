@@ -11,20 +11,20 @@ source ./functions.sh
 
 ### Get opts
 
-usage() { echo -e "Usage:\n\n-i\t [true/false] Install pre-reqs, defaults to true\n-p\t [string] Admin password\n-m\t\t [string] My Domain\n-l\t [string] Lets Encrypt contact email\n-u\t [true/false] Run zone updates on DNS, false after first run\n\n"; exit 1 }
+usage() { echo -e "Usage:\n\n-i [true/false]\tInstall pre-reqs\n-p [string]\tAdmin password\n-m [string]\tMy Domain\n-l [string]\tLets Encrypt contact email\n-u [true/false]\tRun zone updates on DNS, false after first run\n\n"; exit 1; }
 
 exec_dir=$(pwd)
 i="true"          # install puppet/deps
 d="true"          # install DNS
-while getopts ":i:p:d:l:u::h:" o; do
+while getopts ":i:p:m:d:l:u:" o; do
     case "${o}" in
-        h) usage ;;
         i) i=${OPTARG} ;;
         p) admin_password=${OPTARG} ;;
         m) export facter_my_domain=${OPTARG} ;;
         l) export facter_le_email=${OPTARG} ;;
         d) export facter_dns_enable=${OPTARG} ;;
         u) u=${OPTARG} ;;
+        *) usage ;;
     esac
 done
 
