@@ -4,7 +4,7 @@ export FIRST_RUN=false
 export log_dir='/root/puppet_logs'
 mkdir -p ${log_dir}
 
-iverb='Configuring'
+iverb='Re-configuring'
 
 if ! [ -e /root/.puppet_domain ]; then
     FIRST_RUN=true
