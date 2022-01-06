@@ -4,8 +4,18 @@ export FIRST_RUN=false
 export log_dir='/root/puppet_logs'
 mkdir -p ${log_dir}
 
+iverb='Configuring'
+
 if ! [ -e /root/.puppet_domain ]; then
     FIRST_RUN=true
+    iverb='Installing'
+else
+    admin_password='none'
+fi
+admin_password=${admin_password:-0}
+if [ "${admin_password}" == '0' ]; then
+    echo -e "Enter the initial password for your user: "
+    read -s admin_password
 fi
 
 if [ -e ${log_dir}/build_log ]; then
@@ -54,7 +64,7 @@ if [ "${i}" == 'true' ]; then
 fi
 
 if [ ${facter_wg_server_enabled} == 'true' ] || [ ${facter_wg_client_enabled} == 'true' ]; then
-    step_print "Installing wireguard requirements..."
+    step_print "${iverb} wireguard requirements..."
     if [ "${i}" == 'true' ]; then
         install_wg_packages
     fi
@@ -62,28 +72,21 @@ fi
 
 ### We made it here, lets get the admin password and start
 
-if [ $FIRST_RUN == false ]; then
-    admin_password='none'
-fi
-admin_password=${admin_password:-0}
-if [ "${admin_password}" == '0' ]; then
-    echo -e "Enter the initial password for your user: "
-    read -s admin_password
-fi
+
 export facter_admin_password=$(doveadm pw -s BLF-CRYPT -p ${admin_password})
 
 ### - run puppet
 
-step_print "Installing system pre-requisites (nginx/certs/spam/AV).."
+step_print "${iverb} system pre-requisites (nginx/certs/spam/AV).."
 puppet apply -l ${log_dir}/build_log ${exec_dir}/prereq.pp
-step_print "Installing postgres and setting up schemas and rights.."
+step_print "${iverb} postgres and setting up schemas and rights.."
 puppet apply -l ${log_dir}/build_log ${exec_dir}/database.pp
-step_print "Installing wireguard services (if enabled).."
+step_print "${iverb} wireguard services (if enabled).."
 puppet apply -l ${log_dir}/build_log ${exec_dir}/wireguard.pp
-step_print "Installing postfix/dovecot services and seeding initial tables.."
+step_print "${iverb} postfix/dovecot services and seeding initial tables.."
 puppet apply -l ${log_dir}/build_log ${exec_dir}/postfix.pp
 if [ $facter_dns_enable == 'true' ]; then
-    step_print "Installing bind9 and setting up keys.."
+    step_print "${iverb} bind9 and setting up keys.."
     puppet apply -l ${log_dir}/build_log ${exec_dir}/dns.pp
 fi
 
