@@ -1,0 +1,33 @@
+
+module postfix-virtual 1.0;
+
+require {
+        type postfix_virtual_t;
+        type krb5_keytab_t;
+        type dovecot_auth_t;
+        type postgresql_port_t;
+        type spamd_t;
+        type var_lib_t;
+        type var_t;
+        type unlabeled_t;
+        type logrotate_t;
+        class dir { search write read };
+        class file { read getattr open write map lock };
+        class lnk_file { read write getattr };
+        class tcp_socket name_connect;
+}
+
+#============= postfix_virtual_t ==============
+allow postfix_virtual_t krb5_keytab_t:dir search;
+
+#============= dovecot_auth_t ==============
+allow dovecot_auth_t postgresql_port_t:tcp_socket name_connect;
+
+#============= spamd_t ==============
+allow spamd_t var_lib_t:lnk_file { getattr read write };
+allow spamd_t var_lib_t:dir { write read search };
+
+#============= logrotate_t ==============
+allow logrotate_t unlabeled_t:file { read getattr };
+allow logrotate_t var_t:file { read getattr open write map lock };
+allow logrotate_t var_t:dir { read search };
