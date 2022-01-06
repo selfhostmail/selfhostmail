@@ -1,13 +1,24 @@
 #!/bin/bash
 
+function step_print() {
+  msg=$1
+  echo -e "\e[34m***\e[39m ${msg}"
+}
+
+function msg_print() {
+  msg=$1
+  echo -e "\e[96m*\e[39m ${msg}"
+}
+
+
 function import_settings() {
     source <(grep = /root/.puppet_domain) &> /dev/null
     if ! [ -z $my_domain ]; then
-        echo -e "\e[34m***\e[39m Previous config found: Using ${my_domain}\n"
+        msg_print "Previous config found: Using ${my_domain}\n"
         facter_my_domain=$my_domain
         facter_update_dns='false'
         i=false
-        echo -e "\e[34m***\e[39m Using existing packages.."
+        msg_print "Using existing packages.."
     else
         echo "my_domain=${facter_my_domain}" >> /root/.puppet_domain
     fi
@@ -68,26 +79,26 @@ function import_settings() {
 }
 
 function install_yum_repos() {
-  echo -e "\e[34m***\e[39m Enabling EPEL, ELrepo, and PowerTools official repos..."
+  step_print "Enabling EPEL, ELrepo, and PowerTools official repos..."
   rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org &>> puppet-domain.log
   dnf --quiet --assumeyes install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm &>> puppet-domain.log
   dnf config-manager --set-enabled powertools &>> puppet-domain.log
-  echo -e "\e[34m***\e[39m Installing puppet (and pre-installing dovecot for password generation ease...)"
+  step_print "Installing puppet (and pre-installing dovecot for password generation ease...)"
   dnf --quiet --assumeyes install dovecot epel-release puppet &>> puppet-domain.log
 
 }
 
 function install_wg_packages() {
-  echo -e "\e[34m***\e[39m Installing wireguard packages..."
+  step_print "Installing wireguard packages..."
   dnf --quiet --assumeyes install wireguard-tools kmod-wireguard &>> puppet-domain.log
-  echo -e "\e[34m***\e[39m Loading wireguard kernel modules..."
+  step_print "Loading wireguard kernel modules..."
   modprobe wireguard &>> puppet-domain.log
 }
 
 function install_puppet_module() {
     module=$1
     repopath=$2
-    echo -e "\e[34m***\e[39m Installing ${module} from ${repopath}"
+    step_print "Installing ${module} from ${repopath}"
     if ! [ -e "/etc/puppetlabs/code/modules/${module}" ]; then
         if ! [ -z $repopath ]; then
             cd /tmp && git clone -q ${github_project}/${repopath}-${module} && mv /tmp/${repopath}-${module} /etc/puppetlabs/code/modules/${module}
@@ -98,7 +109,7 @@ function install_puppet_module() {
 }
 
 function install_puppet_modules() {
-  echo -e "\e[34m***\e[39m Installing Puppet modules.."
+  step_print "Installing Puppet modules.."
   install_puppet_module puppetlabs-stdlib
   install_puppet_module puppetlabs-concat
   install_puppet_module thias-sysctl
