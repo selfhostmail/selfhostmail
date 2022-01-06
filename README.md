@@ -4,10 +4,10 @@ A scripted, 'puppet apply' approach to building a secure mail and wireguard gate
 
 # Contents
 * [What does this provide?](#provides-services)
+* [Assumptions](#assumptions)
 * [Usage](#usage)
 * [After installation](#after-installation)
-* [Assumptions](#assumptions)
-* [Notes](#notes)
+* [Further Information](#further-information)
 
 # Provides services
 
@@ -39,16 +39,21 @@ A scripted, 'puppet apply' approach to building a secure mail and wireguard gate
 * This assumes you're running a RHEL8/CentOS8 compatible distro (tested on Rocky and CentOS 8) - though the puppet modules mostly support other distros some choices were made in execs to support only RHEL compatible
   * (PRs welcome to support other distros)
 * Your hostname should be an FQDN and should be reachable by FQDN as this is used for provisioning Lets Encrypt certs
+* This script will not currently work with private hostnames as Lets Encrypt is used for cert provisioning
 * Port 80 should NOT be blocked as this is used by the Lets Encrypt cert provisioning process
 * You should already have your domain/cloud provider providing DNS. Do *NOT* point your nameservers at this instance until after you confirm named is started and serving your domain!
 * You have checked out this git repoistory to /root, have not renamed it, and are running this as root.
 
 # Usage
 
-I recommend forking this project and commiting your changes back to git. You can always merge from this back into your fork. 
+If you need customizations to the stack, I recommend forking this project and commiting your changes back to git in your own fork - you can always merge from this upstream into your fork that way.
 
-1. MAKE SURE YOUR HOST HAS A VALID FQDN!!! This will cause certbot to fail to get a cert from letsencrypt. Letsencrypt must be able to reach nginx on port 80 via FQDN.
+1. Provision a new host in the cloud that has:
+   - At least 4GB RAM - this can be a 1CPU/1GB RAM VPS but you'll need to give it a swapfile.
+   - An FQDN that is reachable via FQDN for the domain you'll want to host.
+     - e.g. step 1, buy domain, step 2, spin up host, step 3, add A record in domain registrar to make sure host is accessible
 2. Edit the puppet-domain.sh script and set variables as you want
+   - At a minimum you'll need to set the 'my_domain' and 'le_email' variables as the script will not work unless these two are set to match reality.
 3. Run the script, *as root*:
 ```bash
 cd /root
@@ -61,6 +66,18 @@ cd self-host-puppet
 bash ./puppet-domain.sh -l myemail@yahoo.com -d myfancydomain.com -p adminpassword
 ```
 
+I use this to host my own mail/domain services so I hope you have a clean installation. Please enter an issue if there is a problem!
+
+Note, this has only been tested and will be support on a 'clean' freshly installed cloud system. I'm sure it works elsewhere assuming you have FQDN naming/records set up as expected and are running on a RHEL compatible distro and haven't fscked your base OS.
+
+# After installation
+
+A convenience script is provided to manage users and virtual domains. See ./pfadmin.sh -h for usage.
+
+## Usage Notes
+
+* If you don't specify a password, the script will prompt you for a password, this is the only prompt you'll receive.
+* If there are problems, the puppet logs are kept at /root/puppet_logs, check here for problems first before filing a bug report
 * If you kept wireguard server enabled, then after running, you'll want to run 'firezone-ctl create-or-reset-admin' and watch for the new password on the screen.
 * You can add new virtual users by running 'vmailctl.sh -c addvuser -u username -d example.com'
 * After the first run, a /root/.puppet_domain file is created with the postgres user passwords and settings. As long as this file is there, you can re-pull and reset the git repo and no need to edit the script a second time.
@@ -69,13 +86,7 @@ bash ./puppet-domain.sh -l myemail@yahoo.com -d myfancydomain.com -p adminpasswo
 
 Currently this setup does NOT add the domains to the virtual_domains table. You can do this manually for any additional domains with 'vmailctl.sh -c addvdomain -d example.com'. Make sure to add the 'abuse' and 'postmaster' aliases.
 
-Note, this has only been tested on a 'clean' freshly installed cloud system. I'm sure it works elsewhere assuming you have FQDN naming/records set up as expected and are running on a RHEL compatible distro and haven't fscked your base OS.
-
-# After installation
-
-A convenience script is provided to manage users and virtual domains. See ./pfadmin.sh -h for usage.
-
-# Notes
+# Further Information
 
 ## Self-hosting DNS
 
@@ -139,3 +150,11 @@ The current support is very basic and generates a new client keypair and adds th
 * Can I drop this on top of my existing firezone installation?
 
   * I guess you could but you'd lose your database though in theory it should work. This script disabled the chef-controlled 'local' nginx/postgres in firezone and uses the system nginx/postgres proivded by your OS and puppet so there may also be conflicts.
+
+# BUG REPORTS
+
+I didn't write any of the upstream packages here but am happy to use them and am happy to help you chase bugs in this script and puppet modules. I've forked (with PRs pending) a couple of puppet modules to make this work as I needed and will take bug reports for them here.
+
+# THANKS
+
+Thanks to the https://github.com/firezone/firezone project as I was able to replace my hacky scripted stuff with their slick UI.
