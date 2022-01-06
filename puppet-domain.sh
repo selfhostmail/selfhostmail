@@ -31,6 +31,8 @@ done
 
 #### First, import settings and install pre-reqs
 
+step_print "Running - please be patient, this can take up to 10 minutes (or more!) on slower systems...."
+
 import_settings
 
 if [ "${u}" == 'true' ]; then

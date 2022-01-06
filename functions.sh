@@ -10,11 +10,10 @@ function msg_print() {
   echo -e "\e[96m*\e[39m ${msg}"
 }
 
-
 function import_settings() {
     source <(grep = /root/.puppet_domain) &> /dev/null
     if ! [ -z $my_domain ]; then
-        msg_print "Previous config found: Using ${my_domain}\n"
+        msg_print "Previous config found: Using ${my_domain}"
         facter_my_domain=$my_domain
         facter_update_dns='false'
         i=false
