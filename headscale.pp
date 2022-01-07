@@ -104,8 +104,8 @@ file {"/etc/headscale/derp.yaml":
           \"Name\": \"1\",
           \"RegionID\": 900,
           \"HostName\": \"${facts['fqdn']}\",
-          \"DERPPort\": 2443,
-          \"STUNPort\": 3478
+          \"STUNPort\": 3478,
+          \"DERPPort\": 2443
       }]
     }}
   }
@@ -123,7 +123,7 @@ listen_addr: 127.0.0.1:8080
 private_key_path: /var/lib/headscale/private.key
 derp:
   urls:
-    - https://${facts['fqdn']}/:2443
+    - https://${facts['fqdn']}:2443/
   paths:
     - /etc/headscale/derp.yaml
   auto_update_enabled: true
