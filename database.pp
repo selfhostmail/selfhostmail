@@ -152,28 +152,54 @@ postgresql::server::db { $facts['postfix_db']:
   ensure    => present,
   role      => $facts['pf_user'],
 }
-
-postgresql::server::role { "${facts['fz_user']}":
-  password_hash    => postgresql::postgresql_password($facts['fz_user'], $facts['fz_password']),
-  superuser        => true,
+if $facts['firezone_enabled'] == 'true' {
+  postgresql::server::role { "${facts['fz_user']}":
+    password_hash    => postgresql::postgresql_password($facts['fz_user'], $facts['fz_password']),
+    superuser        => true,
+  }
+  -> postgresql::server::pg_hba_rule { 'allow fz user full md5 access':
+    description => 'Open up PostgreSQL for access from 127.0.0.1 for firezone',
+    type        => 'host',
+    user        => $facts['fz_user'],
+    database    => 'all',
+    address     => '127.0.0.1/32',
+    auth_method => 'md5',
+  }
+  -> postgresql::server::db { "${facts['fz_db']}":
+    user      => $facts['fz_user'],
+    password  => $facts['fz_password'],
+  }
+  -> postgresql::server::pg_hba_rule { 'allow fz full localhost access':
+    description => 'Open up PostgreSQL for access from 127.0.0.1 for firezone',
+    type        => 'host',
+    user        => 'all',
+    database    => 'all',
+    address     => '127.0.0.1/32',
+    auth_method => 'trust',
+  }
 }
--> postgresql::server::pg_hba_rule { 'allow fz user full md5 access':
-  description => 'Open up PostgreSQL for access from 127.0.0.1 for firezone',
-  type        => 'host',
-  user        => $facts['fz_user'],
-  database    => 'all',
-  address     => '127.0.0.1/32',
-  auth_method => 'md5',
-}
--> postgresql::server::db { "${facts['fz_db']}":
-  user      => $facts['fz_user'],
-  password  => $facts['fz_password'],
-}
--> postgresql::server::pg_hba_rule { 'allow fz full localhost access':
-  description => 'Open up PostgreSQL for access from 127.0.0.1 for firezone',
-  type        => 'host',
-  user        => 'all',
-  database    => 'all',
-  address     => '127.0.0.1/32',
-  auth_method => 'trust',
-}
+elsif $facts['headscale_enabled'] == 'true' {
+  postgresql::server::role { "${facts['hs_user']}":
+    password_hash    => postgresql::postgresql_password($facts['hs_user'], $facts['hs_password']),
+    superuser        => true,
+  }
+  -> postgresql::server::pg_hba_rule { 'allow hs user full md5 access':
+    description => 'Open up PostgreSQL for access from 127.0.0.1 for headscale',
+    type        => 'host',
+    user        => $facts['hs_user'],
+    database    => 'all',
+    address     => '127.0.0.1/32',
+    auth_method => 'md5',
+  }
+  -> postgresql::server::db { "${facts['hs_db']}":
+    user      => $facts['hs_user'],
+    password  => $facts['hs_password'],
+  }
+  -> postgresql::server::pg_hba_rule { 'allow hs full localhost access':
+    description => 'Open up PostgreSQL for access from 127.0.0.1 for headscale',
+    type        => 'host',
+    user        => 'all',
+    database    => 'all',
+    address     => '127.0.0.1/32',
+    auth_method => 'trust',
+  }
