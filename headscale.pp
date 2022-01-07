@@ -116,7 +116,7 @@ WantedBy=multi-user.target
   enable => 'true'
 }
 -> service {"headscale":
-  ensure => "running"
+  ensure => "running",
   enable => 'true'
 }
 -> exec {"create first namespace":
