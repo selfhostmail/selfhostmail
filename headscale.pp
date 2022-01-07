@@ -19,7 +19,7 @@ Description=DERP tailscale service
 
 [Service]
 Type=simple
-ExecStart=/opt/headscale/bin/derper -a ':8443' -stun -c 'var/lib/derper/derper.key'
+ExecStart=/opt/headscale/bin/derper -a ':2443' -stun -c 'var/lib/derper/derper.key' -certdir '/var/lib/derper' -certmoder 'letsencrypt'
 User=headscale
 WorkingDirectory=/tmp
 
@@ -97,7 +97,7 @@ file {"/etc/headscale/derp.yaml":
           \"Name\": \"1\",
           \"RegionID\": 900,
           \"HostName\": \"${facts['fqdn']}\",
-          \"DERPPort\": 8443,
+          \"DERPPort\": 2443,
           \"STUNPort\": 3478
       }]
     }}
@@ -116,7 +116,7 @@ listen_addr: http://127.0.0.1:8080
 private_key_path: /var/lib/headscale/private.key
 derp:
   urls:
-    - https://${facts['fqdn']}/derp/derpmap/default
+    - https://${facts['fqdn']}/:2443
   paths:
     - /etc/headscale/derp.yaml
   auto_update_enabled: true
@@ -224,11 +224,56 @@ nginx::resource::server { "${facts['fqdn']}-ssl":
         proxy_set_header => ['HOST $host', 'X-Real-IP $remote_addr','X-Forwarded-For $remote_addr', 'X-Forwarded-Proto https'],
         proxy_redirect => 'off',
       },
-    'socket' => {
-      location => '~ ^/derp',
-      proxy       => 'http://headscale_derp',
-      proxy_set_header => ['HOST $host', 'X-Real-IP $remote_addr','X-Forwarded-For $remote_addr', 'X-Forwarded-Proto https', 'Connection "upgrade"', 'Upgrade $http_upgrade'],
-      proxy_http_version => '1.1'
-    }
   }
+}
+# I'm sure we'll need this soon
+#file {'/etc/firewalld/services/wireguard.xml':
+#  ensure => 'file',
+#  content => inline_template('<?xml version="1.0" encoding="utf-8"?>
+#<service>
+#  <short>wireguard</short>
+#  <description>WireGuard open UDP port <%= @wg_server_port -%> for client connections</description>
+#  <port protocol="udp" port="<%= @wg_server_port -%>"/>
+#</service>'),
+#}
+file {'/etc/firewalld/services/derp.xml':
+  ensure => 'file',
+  content => inline_template('<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>derp</short>
+  <description>DERP open TCP port 2443 for client connections</description>
+  <port protocol="tcp" port="2443"/>
+</service>'),
+}
+-> file {'/etc/firewalld/services/stun.xml':
+  ensure => 'file',
+  content => inline_template('<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>stun</short>
+  <description>STUN open UDP port 3478 for client connections</description>
+  <port protocol="udp" port="3478"/>
+</service>'),
+}
+-> firewalld_zone { 'trusted':
+  ensure           => present,
+  target           => 'ACCEPT',
+  masquerade       => true,
+  interfaces       => ['wg0'],
+  purge_rich_rules => true,
+  purge_services   => true,
+  purge_ports      => true,
+}
+-> firewalld_service { 'Allow stun from the external zone':
+  ensure  => 'present',
+  service => 'stun',
+  zone    => 'public',
+}
+-> firewalld_service { 'Allow derp from the external zone':
+  ensure  => 'present',
+  service => 'derp',
+  zone    => 'public',
+}
+-> exec {'reload firewall':
+  command => "/usr/bin/systemctl restart firewalld",
+  refreshonly => true
 }
