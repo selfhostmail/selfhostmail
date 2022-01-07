@@ -15,7 +15,7 @@ require {
         type var_t;
 
         class dir { search write read };
-        class file { execute read getattr open write map lock };
+        class file { execute execute_no_trans read getattr open write map lock };
         class lnk_file { read write getattr };
         class tcp_socket name_connect;
 }
@@ -36,4 +36,4 @@ allow logrotate_t var_t:file { read getattr open write map lock };
 allow logrotate_t var_t:dir { read search };
 
 #============= init_t ==============
-allow init_t user_tmp_t:file execute;
+allow init_t user_tmp_t:file { execute execute_no_trans };
