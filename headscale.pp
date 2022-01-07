@@ -19,7 +19,7 @@ Description=DERP tailscale service
 
 [Service]
 Type=simple
-ExecStart=/opt/headscale/bin/derper -a ':2443' -stun -c 'var/lib/derper/derper.key' -certdir '/var/lib/derper' -certmode 'letsencrypt'
+ExecStart=/opt/headscale/bin/derper -hostname '${facts['my_domain']}' -a ':2443' -stun -c 'var/lib/derper/derper.key' -certdir '/var/lib/derper' -certmode 'manual'
 User=headscale
 WorkingDirectory=/tmp
 
@@ -81,7 +81,14 @@ WantedBy=multi-user.target
   owner  => 'headscale',
   group  => 'headscale',
 }
-
+-> exec {"ensuring most updated key for derper":
+  command => "/usr/bin/cp /etc/letsencrypt/live/${facts['my_domain']}/$(/usr/bin/readlink /etc/letsencrypt/live/${facts['my_domain']}/privkey.pem) /var/lib/derper/${facts['my_domain']}.key"
+  notify => Service['derp']
+}
+-> exec {"ensuring most updated cert for derper":
+  command => "/usr/bin/cp /etc/letsencrypt/live/${facts['my_domain']}/$(/usr/bin/readlink /etc/letsencrypt/live/${facts['my_domain']}/cert.pem) /var/lib/derper/${facts['my_domain']}.crt",
+  notify => Service['derp']
+}
 file {"/etc/headscale/derp.yaml":
   ensure => 'file',
   owner  => 'headscale',
