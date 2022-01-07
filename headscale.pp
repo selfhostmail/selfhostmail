@@ -82,7 +82,7 @@ WantedBy=multi-user.target
   group  => 'headscale',
 }
 -> exec {"ensuring most updated key for derper":
-  command => "/usr/bin/cp /etc/letsencrypt/live/${facts['my_domain']}/$(/usr/bin/readlink /etc/letsencrypt/live/${facts['my_domain']}/privkey.pem) /var/lib/derper/${facts['my_domain']}.key"
+  command => "/usr/bin/cp /etc/letsencrypt/live/${facts['my_domain']}/$(/usr/bin/readlink /etc/letsencrypt/live/${facts['my_domain']}/privkey.pem) /var/lib/derper/${facts['my_domain']}.key",
   notify => Service['derp']
 }
 -> exec {"ensuring most updated cert for derper":
