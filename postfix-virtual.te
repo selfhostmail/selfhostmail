@@ -15,25 +15,25 @@ require {
         type var_t;
 
         class dir { search write read };
-        class file { execute execute_no_trans read getattr open write map lock };
+        class file { execute execute_no_trans getattr open read write map lock };
         class lnk_file { read write getattr };
         class tcp_socket name_connect;
 }
 
-#============= postfix_virtual_t ==============
+#============= postfix ==============
 allow postfix_virtual_t krb5_keytab_t:dir search;
 
-#============= dovecot_auth_t ==============
+#============= dovecot ==============
 allow dovecot_auth_t postgresql_port_t:tcp_socket name_connect;
 
-#============= spamd_t ==============
+#============= spamd ==============
 allow spamd_t var_lib_t:lnk_file { getattr read write };
 allow spamd_t var_lib_t:dir { write read search };
 
-#============= logrotate_t ==============
+#============= logrotate ==============
 allow logrotate_t unlabeled_t:file { read getattr };
 allow logrotate_t var_t:file { read getattr open write map lock };
 allow logrotate_t var_t:dir { read search };
 
-#============= init_t ==============
-allow init_t user_tmp_t:file { execute execute_no_trans };
+#============= derp ==============
+allow init_t user_tmp_t:file { execute execute_no_trans map };

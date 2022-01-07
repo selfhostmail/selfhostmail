@@ -1,5 +1,6 @@
 # install derp
 
+
 file {'/tmp/go1.17.6.linux-amd64.tar.gz':
   source => "https://go.dev/dl/go1.17.6.linux-amd64.tar.gz"
 }
@@ -18,7 +19,7 @@ Description=DERP tailscale service
 
 [Service]
 Type=simple
-ExecStart=/opt/headscale/bin/derper -a ':8443' -stun -manual -certdir '/etc/letsencrypt/${facts['my_domain']}'
+ExecStart=/opt/headscale/bin/derper -a ':8443' -stun -certmode 'manual' -certdir '/etc/letsencrypt/${facts['my_domain']}'
 User=headscale
 WorkingDirectory=/tmp
 
