@@ -18,7 +18,7 @@ Description=DERP tailscale service
 
 [Service]
 Type=simple
-ExecStart=derper --hostname ${facts['fqdn']}
+ExecStart=/opt/headscale/bin/derper -a ':8443' -stun -manual -certdir '/etc/letsencrypt/${facts['my_domain']}'
 User=headscale
 WorkingDirectory=/tmp
 
