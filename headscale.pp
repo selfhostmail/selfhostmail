@@ -19,7 +19,7 @@ Description=DERP tailscale service
 
 [Service]
 Type=simple
-ExecStart=/opt/headscale/bin/derper -hostname '${facts['my_domain']}' -httpPort '-1' -a ':2443' -stun -c 'var/lib/derper/derper.key' -certdir '/var/lib/derper' -certmode 'manual'
+ExecStart=/opt/headscale/bin/derper -hostname '${facts['my_domain']}' -http-port '-1' -a ':2443' -stun -c 'var/lib/derper/derper.key' -certdir '/var/lib/derper' -certmode 'manual'
 User=headscale
 WorkingDirectory=/tmp
 
