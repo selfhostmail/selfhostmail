@@ -19,7 +19,7 @@ Description=DERP tailscale service
 
 [Service]
 Type=simple
-ExecStart=/opt/headscale/bin/derper -a ':2443' -stun -c 'var/lib/derper/derper.key' -certdir '/var/lib/derper' -certmoder 'letsencrypt'
+ExecStart=/opt/headscale/bin/derper -a ':2443' -stun -c 'var/lib/derper/derper.key' -certdir '/var/lib/derper' -certmode 'letsencrypt'
 User=headscale
 WorkingDirectory=/tmp
 
