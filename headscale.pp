@@ -35,6 +35,25 @@ WantedBy=multi-user.target
   gid    => 'headscale',
   shell  => '/sbin/nologin',
 }
+-> file {"/var/lib/derper/config.yaml":
+  ensure => 'file',
+  owner  => 'headscale',
+  group  => 'headscale',
+  content => inline_template("regions:
+  900:
+    regionid: 900
+    regioncode: myderp
+    regionname: My Region
+    nodes:
+      - name: 900a
+        regionid: 900
+        hostname: ${facts['fqdn']}
+        ipv4: ${facts['networking']['ip6']
+        ipv6: ${facts['networking']['ip6']
+        stunport: 3478
+        stunonly: false
+        derptestport: 0
+"}
 -> file {"/var/lib/derper":
   ensure => 'directory',
   owner  => 'headscale',
@@ -61,19 +80,43 @@ WantedBy=multi-user.target
   owner  => 'headscale',
   group  => 'headscale',
 }
+
+file {"/etc/headscale/derp.yaml":
+  ensure => 'file',
+  owner  => 'headscale',
+  group  => 'headscale',
+  content => inline_template("
+{
+  \"derpMap\": {
+    \"OmitDefaultRegions\": true,
+    \"Regions\": { \"900\": {
+      \"RegionID\": 900,
+      \"RegionCode\": \"myderp\",
+      \"Nodes\": [{
+          \"Name\": \"1\",
+          \"RegionID\": 900,
+          \"HostName\": \"${facts['fqdn']}\",
+          \"DERPPort\": 8443,
+          \"STUNPort\": 3478
+      }]
+    }}
+  }
+}"}
+
+
 -> file {"/etc/headscale/config.yaml":
   ensure => 'file',
   owner  => 'headscale',
   group  => 'headscale',
   content => inline_template("
 server_url: https://${facts['my_domain']}
-listen_addr: 127.0.0.1:8080
+listen_addr: http://127.0.0.1:8080
 private_key_path: /var/lib/headscale/private.key
 derp:
   urls:
     - https://${facts['fqdn']}/derp/derpmap/default
   paths:
-    - /etc/headscale/derp-example.yaml
+    - /etc/headscale/derp.yaml
   auto_update_enabled: true
   update_frequency: 24h
 disable_check_updates: false
@@ -153,6 +196,8 @@ nginx::resource::upstream { 'headscale':
 }
 
 
+
+
 nginx::resource::upstream { 'headscale_derp':
   ensure => 'present',
   ip_hash   => true,
@@ -174,12 +219,12 @@ nginx::resource::server { "${facts['fqdn']}-ssl":
   ssl_key     => "/etc/letsencrypt/live/${facts['my_domain']}/privkey.pem",
   use_default_location => false,
   locations => {
-  'root' => {
-      location => '/',
-      proxy       => 'http://headscale',
-      proxy_set_header => ['HOST $host', 'X-Real-IP $remote_addr','X-Forwarded-For $remote_addr', 'X-Forwarded-Proto https'],
-      proxy_redirect => 'off',
-    },
+    'root' => {
+        location => '/',
+        proxy       => 'http://headscale',
+        proxy_set_header => ['HOST $host', 'X-Real-IP $remote_addr','X-Forwarded-For $remote_addr', 'X-Forwarded-Proto https'],
+        proxy_redirect => 'off',
+      },
     'socket' => {
       location => '~ ^/derp',
       proxy       => 'http://headscale_derp',
