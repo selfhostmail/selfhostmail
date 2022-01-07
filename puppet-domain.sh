@@ -80,17 +80,17 @@ export facter_admin_password=$(doveadm pw -s BLF-CRYPT -p ${admin_password})
 
 ### - run puppet
 
-puppet apply ${exec_dir}/prereq.pp &&
-puppet apply ${exec_dir}/database.pp &&
+puppet apply ${exec_dir}/prereq.pp
+puppet apply ${exec_dir}/database.pp
 if [ $facter_wg_client_enable == true ]; then
-puppet apply ${exec_dir}/wg_client.pp &&
+    puppet apply ${exec_dir}/wg_client.pp
 fi
-if [ $facter_wg_firezone_enable == true ]; then
-puppet apply ${exec_dir}/firezone.pp &&
+if [ $facter_firezone_enable == true ]; then
+    puppet apply ${exec_dir}/firezone.pp
 fi
 puppet apply ${exec_dir}/postfix.pp
 if [ $facter_dns_enable == 'true' ]; then
-puppet apply ${exec_dir}/dns.pp
+    puppet apply ${exec_dir}/dns.pp
 fi
 
 step_print "${iverb} system pre-requisites (nginx/certs/spam/AV).."
