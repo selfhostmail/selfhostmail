@@ -19,13 +19,25 @@ Description=DERP tailscale service
 
 [Service]
 Type=simple
-ExecStart=/opt/headscale/bin/derper -a ':8443' -stun
+ExecStart=/opt/headscale/bin/derper -a ':8443' -stun -c 'var/lib/derper/derper.key'
 User=headscale
 WorkingDirectory=/tmp
 
 [Install]
 WantedBy=multi-user.target
 ")
+}
+-> file {"/var/lib/derper":
+  ensure => 'directory',
+  owner  => 'headscale',
+  group  => 'headscale',
+  mode   => '0770',
+}
+-> file {"/var/lib/derper/derper.key":
+  ensure => 'file',
+  owner  => 'headscale',
+  group  => 'headscale',
+  mode   => '0660',
 }
 -> group {"headscale":
   ensure => 'present',
