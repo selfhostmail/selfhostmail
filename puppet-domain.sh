@@ -80,19 +80,6 @@ export facter_admin_password=$(doveadm pw -s BLF-CRYPT -p ${admin_password})
 
 ### - run puppet
 
-puppet apply ${exec_dir}/prereq.pp
-puppet apply ${exec_dir}/database.pp
-if [ $facter_wg_client_enable == 'true' ]; then
-    puppet apply ${exec_dir}/wg_client.pp
-fi
-if [ $facter_firezone_enable == 'true' ]; then
-    puppet apply ${exec_dir}/firezone.pp
-fi
-puppet apply ${exec_dir}/postfix.pp
-if [ $facter_dns_enable == 'true' ]; then
-    puppet apply ${exec_dir}/dns.pp
-fi
-
 step_print "${iverb} system pre-requisites (nginx/certs/spam/AV).."
 puppet apply -l ${log_dir}/build_log ${exec_dir}/prereq.pp
 step_print "${iverb} postgres and setting up schemas and rights.."
@@ -106,7 +93,7 @@ elif [ $facter_firezone_enable == true ]; then
     puppet apply -l ${log_dir}/build_log ${exec_dir}/firezone.pp
 elif [ $facter_headscale_enable == true ]; then
     step_print "${iverb} headscale wireguard services.."
-    puppet apply -l ${log_dir}/build_log ${exec_dir}/firezone.pp
+    puppet apply -l ${log_dir}/build_log ${exec_dir}/headscale.pp
 fi
 
 step_print "${iverb} postfix/dovecot services and seeding initial tables.."
