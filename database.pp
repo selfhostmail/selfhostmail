@@ -203,3 +203,4 @@ elsif $facts['headscale_enabled'] == 'true' {
     address     => '127.0.0.1/32',
     auth_method => 'trust',
   }
+}
