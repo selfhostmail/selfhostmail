@@ -138,3 +138,53 @@ WantedBy=multi-user.target
 -> exec {"create first namespace":
   command => "/usr/local/bin/headscale namespaces create ${facts['my_domain']}_ns"
 }
+
+
+nginx::resource::upstream { 'headscale':
+  ensure => 'present',
+  ip_hash   => true,
+  keepalive => 60,
+  members   => {
+    '127.0.0.1:8080' => {
+      server => '127.0.0.1',
+      port   => 8080
+    }
+  },
+}
+
+
+nginx::resource::upstream { 'headscale_derp':
+  ensure => 'present',
+  ip_hash   => true,
+  keepalive => 60,
+  members   => {
+    '127.0.0.1:8443' => {
+      server => '127.0.0.1',
+      port   => 8443
+    }
+  },
+}
+nginx::resource::server { "${facts['fqdn']}-ssl":
+  ensure      => present,
+  server_name => [ $facts['fqdn'], $facts['my_domain'] ],
+  listen_port => 443,
+  ssl_port    => 443,
+  ssl         => true,
+  ssl_cert    => "/etc/letsencrypt/live/${facts['my_domain']}/fullchain.pem",
+  ssl_key     => "/etc/letsencrypt/live/${facts['my_domain']}/privkey.pem",
+  use_default_location => false,
+  locations => {
+  'root' => {
+      location => '/',
+      proxy       => 'http://headscale',
+      proxy_set_header => ['HOST $host', 'X-Real-IP $remote_addr','X-Forwarded-For $remote_addr', 'X-Forwarded-Proto https'],
+      proxy_redirect => 'off',
+    },
+    'socket' => {
+      location => '~ ^/derp',
+      proxy       => 'http://headscale_derp',
+      proxy_set_header => ['HOST $host', 'X-Real-IP $remote_addr','X-Forwarded-For $remote_addr', 'X-Forwarded-Proto https', 'Connection "upgrade"', 'Upgrade $http_upgrade'],
+      proxy_http_version => '1.1'
+    }
+  }
+}
