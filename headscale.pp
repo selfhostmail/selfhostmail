@@ -19,7 +19,7 @@ Description=DERP tailscale service
 
 [Service]
 Type=simple
-ExecStart=/opt/headscale/bin/derper -a ':8443' -stun -certmode 'manual' -c '/etc/derp/derp.conf' -certdir '/etc/letsencrypt/${facts['my_domain']}'
+ExecStart=/opt/headscale/bin/derper -a ':8443' -stun
 User=headscale
 WorkingDirectory=/tmp
 
