@@ -85,13 +85,13 @@ puppet apply -l ${log_dir}/build_log ${exec_dir}/prereq.pp
 step_print "${iverb} postgres and setting up schemas and rights.."
 puppet apply -l ${log_dir}/build_log ${exec_dir}/database.pp
 
-if [ $facter_wg_client_enabled == true ]; then
+if [ $facter_wg_client_enabled == "true" ]; then
     step_print "${iverb} wireguard client service.."
     puppet apply -l ${log_dir}/build_log ${exec_dir}/wg_client.pp
-elif [ $facter_firezone_enabled == true ]; then
+elif [ $facter_firezone_enabled == "true" ]; then
     step_print "${iverb} firezone wireguard services.."
     puppet apply -l ${log_dir}/build_log ${exec_dir}/firezone.pp
-elif [ $facter_headscale_enabled == true ]; then
+elif [ $facter_headscale_enabled == "true" ]; then
     step_print "${iverb} headscale wireguard services.."
     puppet apply -l ${log_dir}/build_log ${exec_dir}/headscale.pp
 fi
