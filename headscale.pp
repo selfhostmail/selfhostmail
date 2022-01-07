@@ -53,7 +53,8 @@ WantedBy=multi-user.target
         stunport: 3478
         stunonly: false
         derptestport: 0
-"}
+")
+}
 -> file {"/var/lib/derper":
   ensure => 'directory',
   owner  => 'headscale',
@@ -67,7 +68,7 @@ WantedBy=multi-user.target
   mode   => '0660',
 }
 -> file {"/usr/local/bin/headscale":
-  source => "https://github.com/juanfont/headscale/releases/download/v0.12.1/headscale_0.12.1_linux_amd64",
+  source => 'https://github.com/juanfont/headscale/releases/download/v0.12.1/headscale_0.12.1_linux_amd64',
   mode   => "0755",
 }
 -> file {"/etc/headscale":
