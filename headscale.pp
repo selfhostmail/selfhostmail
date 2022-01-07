@@ -77,7 +77,7 @@ dns_config:
   magic_dns: false
   base_domain: example.com
 unix_socket: /var/run/headscale/headscale.sock
-"
+")
 }
 -> file {"/etc/systemd/system/headscale.service":
   ensure => 'file',
@@ -106,7 +106,7 @@ RuntimeDirectory=headscale
 
 [Install]
 WantedBy=multi-user.target
-",
+"),
 }
 -> exec {"reload daemon systemctl":
   command => "/usr/bin/systemctl daemon-reload"
