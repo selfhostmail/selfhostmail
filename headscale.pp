@@ -102,7 +102,8 @@ file {"/etc/headscale/derp.yaml":
       }]
     }}
   }
-}"}
+}")
+}
 
 
 -> file {"/etc/headscale/config.yaml":
