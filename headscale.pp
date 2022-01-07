@@ -112,7 +112,7 @@ file {"/etc/headscale/derp.yaml":
   group  => 'headscale',
   content => inline_template("
 server_url: https://${facts['my_domain']}
-listen_addr: http://127.0.0.1:8080
+listen_addr: 127.0.0.1:8080
 private_key_path: /var/lib/headscale/private.key
 derp:
   urls:
