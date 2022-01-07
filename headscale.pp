@@ -1,5 +1,5 @@
 # install derp
-
+include nginx
 
 file {'/tmp/go1.17.6.linux-amd64.tar.gz':
   source => "https://go.dev/dl/go1.17.6.linux-amd64.tar.gz"
@@ -71,7 +71,7 @@ listen_addr: 127.0.0.1:8080
 private_key_path: /var/lib/headscale/private.key
 derp:
   urls:
-    - https://${facts['fqdn']}/derpmap/default
+    - https://${facts['fqdn']}/derp/derpmap/default
   paths:
     - /etc/headscale/derp-example.yaml
   auto_update_enabled: true
@@ -82,9 +82,9 @@ ephemeral_node_inactivity_timeout: 30m
 db_type: postgres
 db_host: localhost
 db_port: 5432
-db_name: headscale
-db_user: foo
-db_pass: bar
+db_name: ${facts['hs_db']}
+db_user: ${facts['hs_user']}
+db_pass: ${facts['hs_password']}
 tls_letsencrypt_hostname: ''
 acl_policy_path: '/etc/headscale/acl.hujson'
 dns_config:
