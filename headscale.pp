@@ -8,7 +8,7 @@ exec {'extract golang':
   command => "/usr/bin/rm -rf /usr/local/go && /usr/bin/tar -C /usr/local -xzf /tmp/go1.17.6.linux-amd64.tar.gz",
 }
 -> exec {"Install derp":
-  environment => ['GOPATH=/opt/headscale'],
+  environment => [ 'GOPATH=/opt/headscale', 'HOME=/opt/headscale', 'GOCACHE=/opt/headscale' ],
   command => '/usr/local/go/bin/go install tailscale.com/cmd/derper@main',
 }
 -> file {"/etc/systemd/system/derp.service":
