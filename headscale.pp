@@ -48,8 +48,8 @@ WantedBy=multi-user.target
       - name: 900a
         regionid: 900
         hostname: ${facts['fqdn']}
-        ipv4: ${facts['networking']['ip6']
-        ipv6: ${facts['networking']['ip6']
+        ipv4: ${facts['networking']['ip']}
+        ipv6: ${facts['networking']['ip6']}
         stunport: 3478
         stunonly: false
         derptestport: 0
@@ -195,9 +195,6 @@ nginx::resource::upstream { 'headscale':
     }
   },
 }
-
-
-
 
 nginx::resource::upstream { 'headscale_derp':
   ensure => 'present',
