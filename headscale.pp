@@ -1,7 +1,7 @@
 # install derp
 
 ['golang','golang-bin'].each |$package| {
-  pacakge { $package:
+  package { $package:
     ensure => latest
   }
 }
