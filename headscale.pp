@@ -27,6 +27,14 @@ WorkingDirectory=/tmp
 WantedBy=multi-user.target
 ")
 }
+-> group {"headscale":
+  ensure => 'present',
+}
+-> user {"headscale":
+  ensure => 'present',
+  gid    => 'headscale',
+  shell  => '/sbin/nologin',
+}
 -> file {"/var/lib/derper":
   ensure => 'directory',
   owner  => 'headscale',
@@ -38,26 +46,6 @@ WantedBy=multi-user.target
   owner  => 'headscale',
   group  => 'headscale',
   mode   => '0660',
-}
--> group {"headscale":
-  ensure => 'present',
-}
--> user {"headscale":
-  ensure => 'present',
-  gid    => 'headscale',
-  shell  => '/sbin/nologin',
-}
--> file {"/etc/derp":
-  ensure => 'directory',
-  owner  => 'headscale',
-  group  => 'headscale',
-  mode   => '0755',
-}
--> file {"/etc/derp/derp.conf":
-  ensure => 'file',
-  owner  => 'headscale',
-  group  => 'headscale',
-  mode   => '0755',
 }
 -> file {"/usr/local/bin/headscale":
   source => "https://github.com/juanfont/headscale/releases/download/v0.12.1/headscale_0.12.1_linux_amd64",
