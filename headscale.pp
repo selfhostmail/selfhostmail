@@ -9,7 +9,7 @@ exec {'extract golang':
 }
 -> exec {"Install derp":
   environment => ['GOPATH=/opt/headscale'],
-  command => '/usr/local/bin/go install tailscale.com/cmd/derper@main',
+  command => '/usr/local/go/bin/go install tailscale.com/cmd/derper@main',
 }
 -> file {"/etc/systemd/system/derp.service":
   ensure  => 'file',
