@@ -74,8 +74,21 @@ function import_settings() {
     else
         echo "fz_user=${facter_fz_user}" >> /root/.puppet_domain
     fi
-
-
+    if ! [ -z $hs_user ]; then
+        facter_hs_user=$hs_user
+    else
+        echo "hs_user=${facter_hs_user}" >> /root/.puppet_domain
+    fi
+    if ! [ -z $hs_password ]; then
+        facter_hs_password=$hs_password
+    else
+        echo "hs_password=${facter_hs_password}" >> /root/.puppet_domain
+    fi
+    if ! [ -z $hs_db ]; then
+        facter_hs_db=$hs_db
+    else
+        echo "hs_db=${facter_hs_db}" >> /root/.puppet_domain
+    fi
 }
 
 function dnf_install() {
