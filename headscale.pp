@@ -15,6 +15,8 @@ exec {'extract golang':
   ensure  => 'file',
   content => inline_template("[Unit]
 Description=DERP tailscale service
+
+[Service]
 Type=simple
 ExecStart=derper --hostname ${facts['fqdn']}
 User=headscale
