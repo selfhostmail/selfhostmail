@@ -66,7 +66,7 @@ if [ "${i}" == 'true' ]; then
     install_puppet_modules
 fi
 
-if [ ${facter_wg_server_enabled} == 'true' ] || [ ${facter_wg_client_enabled} == 'true' ]; then
+if [ ${facter_firezone_enabled} == 'true' ] || [ ${facter_wg_client_enabled} == 'true' ] || [ ${facter_headscale_enabled} == 'true' ]; then
     step_print "${iverb} wireguard requirements..."
     if [ "${i}" == 'true' ]; then
         install_wg_packages
