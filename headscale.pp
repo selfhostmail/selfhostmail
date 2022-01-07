@@ -41,6 +41,12 @@ WantedBy=multi-user.target
   group  => 'headscale',
   mode   => '0755',
 }
+-> file {"/etc/derp/derp.conf":
+  ensure => 'file',
+  owner  => 'headscale',
+  group  => 'headscale',
+  mode   => '0755',
+}
 -> file {"/usr/local/bin/headscale":
   source => "https://github.com/juanfont/headscale/releases/download/v0.12.1/headscale_0.12.1_linux_amd64",
   mode   => "0755",
