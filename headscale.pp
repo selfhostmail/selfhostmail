@@ -7,7 +7,7 @@
 }
 
 exec {"Install derp":
-  command => "/usr/bin/go install tailscale.com/cmd/derper@main",
+  command => '/usr/bin/go install tailscale.com/cmd/derper@main',
   require => [ Package['golang'], Package['golang-bin'] ]
 }
 -> file {"/etc/systemd/system/derp.service":
