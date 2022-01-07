@@ -19,7 +19,7 @@ Description=DERP tailscale service
 
 [Service]
 Type=simple
-ExecStart=/opt/headscale/bin/derper -a ':8443' -stun -certmode 'manual' -certdir '/etc/letsencrypt/${facts['my_domain']}'
+ExecStart=/opt/headscale/bin/derper -a ':8443' -stun -certmode 'manual' -c '/etc/derp' -certdir '/etc/letsencrypt/${facts['my_domain']}'
 User=headscale
 WorkingDirectory=/tmp
 
@@ -34,6 +34,12 @@ WantedBy=multi-user.target
   ensure => 'present',
   gid    => 'headscale',
   shell  => '/sbin/nologin',
+}
+-> file {"/etc/derp":
+  ensure => 'directory',
+  owner  => 'headscale',
+  group  => 'headscale',
+  mode   => '0755',
 }
 -> file {"/usr/local/bin/headscale":
   source => "https://github.com/juanfont/headscale/releases/download/v0.12.1/headscale_0.12.1_linux_amd64",
