@@ -130,16 +130,17 @@ $my_domains.each |$this_domain| {
   exec {"update serial-${this_domain}":
     command     => "/usr/bin/sed -i \"s/.*; serial$/\\t\\t\\t\\t\\t$(/bin/date '+%s') ; serial/\" /var/named/${this_domain}.db",
     refreshonly => true,
-    notify      => [ Exec["add dkim records-${this_domain}"] ],
-    before      => [ Exec["add dkim records-${this_domain}"] ]
+    before      => [ Exec["add dkim records-${this_domain}"] ],
+    notify      => Service['named']
   }
-  exec {"add dkim records-${this_domain}":
-    command => "/usr/bin/sed -E 's/[()]//g' /etc/opendkim/keys/${this_domain}/*.txt | /usr/bin/tr -d '\n' >> /var/named/${this_domain}.db",
-    unless  => "/usr/bin/grep 'domainkey' /var/named/${this_domain}.db",
-    notify  => Exec["make zsk for ${this_domain}"],
-    refreshonly => true
+  if $facts['mail_enable'] == 'true' {
+    exec {"add dkim records-${this_domain}":
+      command => "/usr/bin/sed -E 's/[()]//g' /etc/opendkim/keys/${this_domain}/*.txt | /usr/bin/tr -d '\n' >> /var/named/${this_domain}.db",
+      unless  => "/usr/bin/grep 'domainkey' /var/named/${this_domain}.db",
+      notify  => Service['named']
+    }
   }
-  -> exec {"make zsk for ${this_domain}":
+  exec {"make zsk for ${this_domain}":
     command => "/usr/sbin/dnssec-keygen -K /var/named/keys -r /dev/urandom -a ECDSAP256SHA256 ${this_domain}",
     unless  => "/usr/bin/find /var/named/keys | /usr/bin/grep ${this_domain}",
     notify  => [ Exec["make ksk for ${this_domain}"], Exec["chown keys ${this_domain}"] ],
@@ -166,7 +167,8 @@ $my_domains.each |$this_domain| {
   }
   -> exec {"create DS records for ${this_domain} in roots home":
     command => "/usr/sbin/dnssec-dsfromkey /var/named/keys/$(cat /tmp/ksk_file_name_${this_domain}) > /root/DS_FOR_REGISTRAR_${this_domain}.db.txt",
-    refreshonly => true
+    refreshonly => true,
+    notify  => Service['named']
   }
 }
 firewalld_service { 'Allow dns from the external zone':

@@ -50,120 +50,113 @@ class { 'postgresql::server':
   listen_addresses           => '127.0.0.1',
 }
 
-### Make postfix DB
-postgresql::server::db { $facts['postfix_db']:
-  user     => $facts['pf_user'],
-  password => postgresql::postgresql_password($facts['pf_user'], $facts['pf_password'])
-}
--> postgresql::server::database_grant { 'postfix grant':
-  ensure    => 'present',
-  privilege => 'ALL',
-  db        => $facts['postfix_db'],
-  role      => $facts['pf_user'],
-}
--> postgresql::server::extension { 'pgcrypto':
-  database => $facts['postfix_db'],
-  ensure => 'present'
-}
-# Make dovecot user
--> postgresql::server::role { $facts['dove_user']:
-  password_hash => postgresql::postgresql_password($facts['dove_user'], $facts['dove_password']),
-}
-# Grant dovecot user access to postfix DB
--> postgresql::server::database_grant { 'dove grant':
-  ensure    => 'present',
-  privilege => 'ALL',
-  db        => $facts['postfix_db'],
-  role      => $facts['dove_user'],
-}
--> postgresql_psql {'1 create virt_domain':
-  command => $virtdomain_table_cmd,
-  unless  => $virtdomain_unless,
-  db      => $facts['postfix_db'],
-}
--> postgresql_psql {'2 create table virt_users':
-  command => $virtusers_table_cmd,
-  unless  => $virtusers_unless,
-  db      => $facts['postfix_db'],
-}
--> postgresql_psql {'3 create table virt_alias':
-  command => $virtalias_table_cmd,
-  unless  => $virtalias_unless,
-  db      => $facts['postfix_db'],
-}
--> postgresql_psql {'4 create first domain':
-  command => $insert_domain_cmd,
-  db      => $facts['postfix_db'],
-  unless  => $insert_domain_unless,
-}
--> postgresql_psql {'5 insert user':
-  command => $insert_admin_cmd,
-  unless  => $insert_admin_unless,
-  db      => $facts['postfix_db'],
-}
--> postgresql_psql {'6 insert user alias':
-  command => $insert_adminban_cmd,
-  unless  => $insert_adminban_unless,
-  db      => $facts['postfix_db'],
-}
--> postgresql_psql {'7 insert user pm alias':
-  command => $insert_pm_cmd,
-  unless  => $insert_pm_unless,
-  db      => $facts['postfix_db'],
-}
--> postgresql::server::table_grant { 'postfix grant vu':
-  privilege => 'ALL',
-  db        => $facts['postfix_db'],
-  role      => $facts['pf_user'],
-  table     => 'virtual_users'
-}
--> postgresql::server::table_grant { 'postfix user grant va':
-  privilege => 'ALL',
-  db        => $facts['postfix_db'],
-  role      => $facts['pf_user'],
-  table     => 'virtual_aliases'
-}
--> postgresql::server::table_grant { 'postfix grant vd':
-  privilege => 'ALL',
-  db        => $facts['postfix_db'],
-  role      => $facts['pf_user'],
-  table     => 'virtual_domains'
-}
-# These can most likely be switched to SELECT only, need to test
--> postgresql::server::table_grant { 'dovecot user grant vu':
-  privilege => 'ALL',
-  db        => $facts['postfix_db'],
-  role      => $facts['dove_user'],
-  table     => 'virtual_users'
-}
--> postgresql::server::table_grant { 'dovecot user grant va':
-  privilege => 'ALL',
-  db        => $facts['postfix_db'],
-  role      => $facts['dove_user'],
-  table     => 'virtual_aliases'
-}
-# This could also be split out since this is mostly required for the pfadmin cli utility to work since we share users, postfix service is readonly.
--> postgresql::server::grant { 'postfix_grant_vd_seq':
-  privilege => 'ALL PRIVILEGES',
-  object_type => 'ALL SEQUENCES IN SCHEMA',
-  object_name => ['public', 'virtual_domains_id_seq'],
-  db        => $facts['postfix_db'],
-  psql_db   => $facts['postfix_db'],
-  ensure    => present,
-  role      => $facts['pf_user'],
-}
+if $facts['mail_enable'] == 'true' {
+  ### Make postfix DB
+  postgresql::server::db { $facts['postfix_db']:
+    user     => $facts['pf_user'],
+    password => postgresql::postgresql_password($facts['pf_user'], $facts['pf_password'])
+  }
+  -> postgresql::server::database_grant { 'postfix grant':
+    ensure    => 'present',
+    privilege => 'ALL',
+    db        => $facts['postfix_db'],
+    role      => $facts['pf_user'],
+  }
+  -> postgresql::server::extension { 'pgcrypto':
+    database => $facts['postfix_db'],
+    ensure => 'present'
+  }
+  # Make dovecot user
+  -> postgresql::server::role { $facts['dove_user']:
+    password_hash => postgresql::postgresql_password($facts['dove_user'], $facts['dove_password']),
+  }
+  # Grant dovecot user access to postfix DB
+  -> postgresql::server::database_grant { 'dove grant':
+    ensure    => 'present',
+    privilege => 'ALL',
+    db        => $facts['postfix_db'],
+    role      => $facts['dove_user'],
+  }
+  -> postgresql_psql {'1 create virt_domain':
+    command => $virtdomain_table_cmd,
+    unless  => $virtdomain_unless,
+    db      => $facts['postfix_db'],
+  }
+  -> postgresql_psql {'2 create table virt_users':
+    command => $virtusers_table_cmd,
+    unless  => $virtusers_unless,
+    db      => $facts['postfix_db'],
+  }
+  -> postgresql_psql {'3 create table virt_alias':
+    command => $virtalias_table_cmd,
+    unless  => $virtalias_unless,
+    db      => $facts['postfix_db'],
+  }
+  -> postgresql_psql {'4 create first domain':
+    command => $insert_domain_cmd,
+    db      => $facts['postfix_db'],
+    unless  => $insert_domain_unless,
+  }
+  -> postgresql_psql {'5 insert user':
+    command => $insert_admin_cmd,
+    unless  => $insert_admin_unless,
+    db      => $facts['postfix_db'],
+  }
+  -> postgresql_psql {'6 insert user alias':
+    command => $insert_adminban_cmd,
+    unless  => $insert_adminban_unless,
+    db      => $facts['postfix_db'],
+  }
+  -> postgresql_psql {'7 insert user pm alias':
+    command => $insert_pm_cmd,
+    unless  => $insert_pm_unless,
+    db      => $facts['postfix_db'],
+  }
+  -> postgresql::server::table_grant { 'postfix grant vu':
+    privilege => 'ALL',
+    db        => $facts['postfix_db'],
+    role      => $facts['pf_user'],
+    table     => 'virtual_users'
+  }
+  -> postgresql::server::table_grant { 'postfix user grant va':
+    privilege => 'ALL',
+    db        => $facts['postfix_db'],
+    role      => $facts['pf_user'],
+    table     => 'virtual_aliases'
+  }
+  -> postgresql::server::table_grant { 'postfix grant vd':
+    privilege => 'ALL',
+    db        => $facts['postfix_db'],
+    role      => $facts['pf_user'],
+    table     => 'virtual_domains'
+  }
+  # These can most likely be switched to SELECT only, need to test
+  -> postgresql::server::table_grant { 'dovecot user grant vu':
+    privilege => 'ALL',
+    db        => $facts['postfix_db'],
+    role      => $facts['dove_user'],
+    table     => 'virtual_users'
+  }
+  -> postgresql::server::table_grant { 'dovecot user grant va':
+    privilege => 'ALL',
+    db        => $facts['postfix_db'],
+    role      => $facts['dove_user'],
+    table     => 'virtual_aliases'
+  }
+  # This could also be split out since this is mostly required for the pfadmin cli utility to work since we share users, postfix service is readonly.
+  -> postgresql::server::grant { 'postfix_grant_vd_seq':
+    privilege => 'ALL PRIVILEGES',
+    object_type => 'ALL SEQUENCES IN SCHEMA',
+    object_name => ['public', 'virtual_domains_id_seq'],
+    db        => $facts['postfix_db'],
+    psql_db   => $facts['postfix_db'],
+    ensure    => present,
+    role      => $facts['pf_user'],
+  }
 if $facts['firezone_enabled'] == 'true' {
   postgresql::server::role { "${facts['fz_user']}":
     password_hash    => postgresql::postgresql_password($facts['fz_user'], $facts['fz_password']),
     superuser        => true,
-  }
-  -> postgresql::server::pg_hba_rule { 'allow fz user full md5 access':
-    description => 'Open up PostgreSQL for access from 127.0.0.1 for firezone',
-    type        => 'host',
-    user        => $facts['fz_user'],
-    database    => 'all',
-    address     => '127.0.0.1/32',
-    auth_method => 'md5',
   }
   -> postgresql::server::db { "${facts['fz_db']}":
     user      => $facts['fz_user'],
@@ -178,7 +171,7 @@ if $facts['firezone_enabled'] == 'true' {
     auth_method => 'trust',
   }
 }
-elsif $facts['headscale_enabled'] == 'true' {
+if $facts['headscale_enabled'] == 'true' {
   postgresql::server::role { "${facts['hs_user']}":
     password_hash    => postgresql::postgresql_password($facts['hs_user'], $facts['hs_password']),
     superuser        => true,
