@@ -47,7 +47,7 @@ i="true"          # install puppet/deps
 d="true"          # install DNS
 while getopts ":a:c:f:h:i:p:m:d:l:u:" o; do
     case "${o}" in
-        i) i=${OPTARG} ;;
+        i) install_pre=${OPTARG} ;;
         p) admin_password=${OPTARG} ;;
         m) export facter_my_domain=${OPTARG} ;;
         l) export facter_le_email=${OPTARG} ;;
@@ -56,7 +56,7 @@ while getopts ":a:c:f:h:i:p:m:d:l:u:" o; do
         f) export facter_firezone_enable=${OPTARG} ;;
         h) export facter_headzone_enable=${OPTARG} ;;
         c) export facter_wg_client_enable=${OPTARG} ;;
-        u) u=${OPTARG} ;;
+        u) update_dns=${OPTARG} ;;
         *) usage ;;
     esac
 done
@@ -77,7 +77,7 @@ elif [ "${u}" == 'false' ]; then
   facter_update_dns=false
 fi
 
-if [ "${i}" == 'true' ]; then
+if [ $install_pre == 'true' ]; then
     # Install necessary deps
     install_yum_repos
     install_puppet_modules
@@ -85,7 +85,7 @@ fi
 
 if [ ${facter_firezone_enabled} == 'true' ] || [ ${facter_wg_client_enabled} == 'true' ] || [ ${facter_headscale_enabled} == 'true' ]; then
     step_print "${iverb} wireguard requirements..."
-    if [ "${i}" == 'true' ]; then
+    if [ "${install_pre}" == 'true' ]; then
         install_wg_packages
     fi
 fi
