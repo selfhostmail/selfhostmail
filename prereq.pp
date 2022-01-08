@@ -21,34 +21,46 @@ exec {'update-dnf and powertools':
   unless  => '/usr/bin/ls /etc/yum.repos.d/*-PowerTools.repo',
 }
 
-[
-  'pypolicyd-spf', 'amavis', 'kmod-wireguard', 'wireguard-tools', 'postfix-pgsql', 'dovecot-pgsql',
-  'postgresql-contrib', 'wget', 'unzip', 'curl', 'net-tools', 'python3-certbot-nginx.noarch',
-  'dnf-automatic', 'arj', 'spax', 'p7zip', 'lz4', 'opendkim', 'perl-Getopt-Long', 'spamass-milter-postfix',
-  'perl-Razor-Agent', 'opendmarc', 'postgrey', 'neofetch', 'qrencode'
-].each |$pack| {
+$default_packages = [
+  'wget', 'unzip', 'curl', 'net-tools', 'neofetch', 'python3-certbot-nginx.noarch', 
+  'dnf-automatic', 'postgresql-contrib',
+]
+$wireguard_packages = [ 'kmod-wireguard', 'wireguard-tools' ]
+$mail_packages = [
+  'pypolicyd-spf', 'amavis',  'postfix-pgsql', 'dovecot-pgsql', 'arj', 'spax', 'p7zip', 'lz4', 
+  'opendkim', 'perl-Getopt-Long', 'spamass-milter-postfix', 'perl-Razor-Agent', 'opendmarc', 'postgrey'
+]
+$default_packages.each |$pack| {
   package{ $pack:
     ensure => latest
   }
 }
+if $facts['wg_client_enabled'] == 'true' or $facts['headscale_enabled'] == 'true' or $facts['firezone_enabled'] == 'true' {
+  $wireguard_packages.each |$pack| {
+    package{ $pack:
+      ensure => latest
+    }
+  }
+}
+if $facts['mail_enable'] == 'true' {
+  $mail_packages.each |$pack| {
+    package{ $pack:
+      ensure => latest
+    }
+  }
+}
+
 
 ## Neo fetch is cool
 file {'/etc/profile.d/motd.sh':
   mode => '0775',
-  content => 'neofetch --disable gpu --disable resolution
-echo "Named: $(systemctl is-active named)
-Postfix: $(systemctl is-active postfix)
-opendmarc: $(systemctl is-active opendmarc)
-opendkim: $(systemctl is-active opendkim)
-dovecot: $(systemctl is-active dovecot)
-amavisd: $(systemctl is-active amavisd)
-postgrey: $(systemctl is-active postgrey)
-spamass-milter: $(systemctl is-active spamass-milter)
-firewalld: $(systemctl is-active firewalld)"'
+  content => 'neofetch --disable gpu --disable resolution',
+  require => Package['neofetch']
 }
 exec {'set automatic update to install':
   command => '/usr/bin/sed -i "s/apply_updates = no/apply_updates = yes/" /etc/dnf/automatic.conf',
   unless  => '/usr/bin/grep "apply_updates = yes" /etc/dnf/automatic.conf',
+  require => Package['dnf-automatic']
 }
 -> exec {'enable auto update cron timer':
   command => '/usr/bin/systemctl enable --now dnf-automatic.timer',
@@ -86,20 +98,26 @@ exec {'hacky fail2ban requirement':
   command => "/usr/bin/touch /var/log/fail2ban.log && /usr/bin/systemctl restart fail2ban",
   unless  => "/usr/bin/test -e /var/log/fail2ban.log"
 }
-exec {'amavis - domain':
-  command => "/usr/bin/sed -i \"s/^\\\$mydomain = '.*/\\\$mydomain = '${facts['my_domain']}';/\" /etc/amavisd/amavisd.conf; /usr/bin/sed -i \"s/^# \\\$myhostname = '.*/\\\$myhostname = '${facts['fqdn']}';/\" /etc/amavisd/amavisd.conf;",
-  unless  => "/usr/bin/grep \"\\\$mydomain = '${facts['my_domain']}'\" /etc/amavisd/amavisd.conf"
+if $facts['mail_enable'] == 'true' {
+  exec {'amavis - domain':
+    command => "/usr/bin/sed -i \"s/^\\\$mydomain = '.*/\\\$mydomain = '${facts['my_domain']}';/\" /etc/amavisd/amavisd.conf; /usr/bin/sed -i \"s/^# \\\$myhostname = '.*/\\\$myhostname = '${facts['fqdn']}';/\" /etc/amavisd/amavisd.conf;",
+    unless  => "/usr/bin/grep \"\\\$mydomain = '${facts['my_domain']}'\" /etc/amavisd/amavisd.conf"
+  }
+  -> exec {'amavis - virus check':
+    command => '/usr/bin/sed -i "s/^# @bypass_virus_checks_maps/@bypass_virus_checks_maps/" /etc/amavisd/amavisd.conf',
+    unless  => '/usr/bin/grep "^@bypass_virus_checks_map" /etc/amavisd/amavisd.conf',
+    notify  => Service['amavisd']
+  }
+  service {'amavisd':
+    enable  => true,
+    ensure  => running
+  }
+  firewalld_service { 'Allow smtp from the external zone':
+    ensure  => 'present',
+    service => 'smtp',
+    zone    => 'public',
+  }
 }
--> exec {'amavis - virus check':
-  command => '/usr/bin/sed -i "s/^# @bypass_virus_checks_maps/@bypass_virus_checks_maps/" /etc/amavisd/amavisd.conf',
-  unless  => '/usr/bin/grep "^@bypass_virus_checks_map" /etc/amavisd/amavisd.conf',
-  notify  => Service['amavisd']
-}
-service {'amavisd':
-  enable  => true,
-  ensure  => running
-}
-
 class {'firewalld': }
 
 firewalld_zone { 'public':
@@ -112,11 +130,6 @@ firewalld_zone { 'public':
 -> firewalld_service { 'Allow SSH from the external zone':
     ensure  => 'present',
     service => 'ssh',
-    zone    => 'public',
-}
--> firewalld_service { 'Allow smtp from the external zone':
-    ensure  => 'present',
-    service => 'smtp',
     zone    => 'public',
 }
 -> firewalld_service { 'Allow http from the external zone':
@@ -156,10 +169,9 @@ exec {'daemon-reload':
   refreshonly => true,
   require => Class['nginx'],
 }
-selinux::boolean { 'httpd_can_network_connect': }
+if $facts['firezone_enabled'] =='true' or $facts['headscale_enabled'] == 'true' {
+  selinux::boolean { 'httpd_can_network_connect': }
 
-# Required for silent logs but disable if you don't trust nginx to set ratelimiting on its port
-selinux::boolean { 'httpd_setrlimit': }
-
-# For PHP and reverse proxy to fpm, uncomment if you install roundmail or something
-#selinux::boolean { 'httpd_execmem': }
+  # Required for silent logs but disable if you don't trust nginx to set ratelimiting on its port
+  selinux::boolean { 'httpd_setrlimit': }
+}

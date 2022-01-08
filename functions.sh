@@ -13,12 +13,13 @@ function msg_print() {
 function import_settings() {
     source <(grep = /root/.puppet_domain) &> /dev/null
     if ! [ -z $my_domain ]; then
-        msg_print "Previous config found: Using ${my_domain}"
+        msg_print "Previous config found: Using ${my_domain}..."
         facter_my_domain=$my_domain
         facter_update_dns='false'
         i=false
         msg_print "Using existing packages.."
     else
+        msg_print "No previous config found: Using ${facter_my_domain} as primary domain..."
         echo "my_domain=${facter_my_domain}" >> /root/.puppet_domain
     fi
     if ! [ -z $le_email ]; then
@@ -73,32 +74,53 @@ function import_settings() {
     else
         echo "fz_user=${facter_fz_user}" >> /root/.puppet_domain
     fi
+    if ! [ -z $hs_user ]; then
+        facter_hs_user=$hs_user
+    else
+        echo "hs_user=${facter_hs_user}" >> /root/.puppet_domain
+    fi
+    if ! [ -z $hs_password ]; then
+        facter_hs_password=$hs_password
+    else
+        echo "hs_password=${facter_hs_password}" >> /root/.puppet_domain
+    fi
+    if ! [ -z $hs_db ]; then
+        facter_hs_db=$hs_db
+    else
+        echo "hs_db=${facter_hs_db}" >> /root/.puppet_domain
+    fi
+}
 
-
+function dnf_install() {
+    install_line=$1
+    dnf --quiet --assumeyes install ${install_line}
 }
 
 function install_yum_repos() {
-  step_print "Enabling EPEL, ELrepo, and PowerTools official repos..."
+  step_print "Enabling repo prereqs..."
+  msg_print "Importing ELrepo GPG key..."
   rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org &>> puppet-domain.log
-  dnf --quiet --assumeyes install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm &>> puppet-domain.log
+  msg_print "Installling EPEL, ELrepo, and PowerTools official repo..."
+  dnf_install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm &>> puppet-domain.log
   dnf config-manager --set-enabled powertools &>> puppet-domain.log
-  step_print "Installing puppet (and pre-installing dovecot for password generation ease...)"
-  dnf --quiet --assumeyes install dovecot epel-release puppet &>> puppet-domain.log
+  msg_print "Installing puppet (and pre-installing dovecot for password generation ease...)"
+  dnf_install dovecot epel-release puppet &>> puppet-domain.log
 
 }
 
 function install_wg_packages() {
   step_print "Installing wireguard packages..."
-  dnf --quiet --assumeyes install wireguard-tools kmod-wireguard &>> puppet-domain.log
-  step_print "Loading wireguard kernel modules..."
+  dnf_install wireguard-tools kmod-wireguard &>> puppet-domain.log
+  msg_print "Loading wireguard kernel modules..."
   modprobe wireguard &>> puppet-domain.log
 }
 
 function install_puppet_module() {
     module=$1
     repopath=$2
-    step_print "Installing ${module} from ${repopath}"
-    if ! [ -e "/etc/puppetlabs/code/modules/${module}" ]; then
+    IFS=- read $pup_module <<< "$module"
+    msg_print "Installing ${module}"
+    if ! [ -e "/etc/puppetlabs/code/modules/${module}" ] || ! [ -e "/etc/puppetlabs/code/modules/${pup_module}" ]; then
         if ! [ -z $repopath ]; then
             cd /tmp && git clone -q ${github_project}/${repopath}-${module} && mv /tmp/${repopath}-${module} /etc/puppetlabs/code/modules/${module}
         else
