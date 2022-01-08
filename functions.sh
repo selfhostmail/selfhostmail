@@ -101,16 +101,16 @@ function install_yum_repos() {
   msg_print "Importing ELrepo GPG key..."
   rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org &>> puppet-domain.log
   msg_print "Installling EPEL, ELrepo, and PowerTools official repo..."
-  dnf_install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm &>> puppet-domain.log
+  dnf_install "https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm &>> puppet-domain.log"
   dnf config-manager --set-enabled powertools &>> puppet-domain.log
   msg_print "Installing puppet (and pre-installing dovecot for password generation ease...)"
-  dnf_install dovecot epel-release puppet &>> puppet-domain.log
+  dnf_install "dovecot epel-release puppet &>> puppet-domain.log"
 
 }
 
 function install_wg_packages() {
   step_print "Installing wireguard packages..."
-  dnf_install wireguard-tools kmod-wireguard &>> puppet-domain.log
+  dnf_install "wireguard-tools kmod-wireguard &>> puppet-domain.log"
   msg_print "Loading wireguard kernel modules..."
   modprobe wireguard &>> puppet-domain.log
 }
