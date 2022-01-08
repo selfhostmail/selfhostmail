@@ -70,10 +70,10 @@ step_print "Checking for previous config..."
 import_settings
 
 if [ "${u}" == 'true' ]; then
-  step_print" *** Explicitly running the DNS zone updates/key generation"
+  step_print " *** Explicitly running the DNS zone updates/key generation"
   facter_update_dns=true
 elif [ "${u}" == 'false' ]; then
-  step_print" *** Explicitly NOT running the DNS zone updates/key generation"
+  step_print " *** Explicitly NOT running the DNS zone updates/key generation"
   facter_update_dns=false
 fi
 
@@ -118,7 +118,11 @@ if [ $facter_mail_enable == 'true' ]; then
 fi
 if [ $facter_dns_enable == 'true' ]; then
     step_print "${iverb} bind9 and setting up keys.."
-    puppet apply -l ${log_dir}/build_log ${exec_dir}/dns.pp
+    if [ $facter_update_dns == 'false' ]; then
+        step_print "Skipping, not updating named...."
+    else
+        puppet apply -l ${log_dir}/build_log ${exec_dir}/dns.pp
+    fi
 fi
 
 step_print "Done!\n\n\n"
