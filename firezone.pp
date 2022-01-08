@@ -85,7 +85,7 @@ exec {"refresh firezone config":
 -> sysctl { 'net.ipv4.conf.all.rp_filter':     value => '1' }
 -> sysctl { 'net.ipv4.tcp_syncookies':         value => '1' }
 -> sysctl { 'net.ipv6.conf.all.forwarding':    value => '1' }
--> nginx::resource::upstream { 'firezone_phoenix':
+nginx::resource::upstream { 'firezone_phoenix':
   ensure => 'present',
   ip_hash   => true,
   keepalive => 60,
