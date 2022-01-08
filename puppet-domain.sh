@@ -112,7 +112,7 @@ elif [ $facter_headscale_enabled == "true" ]; then
     step_print "${iverb} headscale wireguard services.."
     puppet apply -l ${log_dir}/build_log ${exec_dir}/headscale.pp
 fi
-if [ $facter_mail_enabled == 'true' ]; then
+if [ $facter_mail_enable == 'true' ]; then
     step_print "${iverb} postfix/dovecot services and seeding initial tables.."
     puppet apply -l ${log_dir}/build_log ${exec_dir}/postfix.pp
 fi
