@@ -1,15 +1,17 @@
 #!/bin/bash
 
 ## CHANGE THESE!!!!!!!!! REALLY!
-export facter_le_email='your_real_email@for_lets_encrypt.com'           # Lets Encrypt Email, must be real and active!
+# Lets Encrypt Email, must be real and active!
+#export facter_le_email='your_real_email@for_lets_encrypt.com'
+export facter_le_email=''
 # Your primary domain of which your fqdn is most likely a part.
 export facter_my_domain='example.org'
 
-# Choose one of the three.
+# Choose one or none of the three wireguard options. If you choose true more than once, the first true is the one chosen.
 export facter_wg_client_enabled='false'
 export facter_firezone_enabled='false'
-export facter_headscale_enabled='true'
-export facter_wg_server_port=51820
+export facter_headscale_enabled='false'
+
 # First User - with default settings this works out to adminuser@example.org.
 export facter_admin_user='adminuser'
 
@@ -25,17 +27,18 @@ export facter_fz_user='firezone'
 export facter_fz_password=`mktemp -u XXXXXXXXXXXXXXXXXXXXXX`
 #export facter_fz_password='postgres'
 export facter_fz_db='firezone'                 # Database name for postfix
+export facter_wg_server_port=51820
 
 # Headscale settings
 export facter_hs_user='headscale'
 export facter_hs_password=`mktemp -u XXXXXXXXXXXXXXXXXXXXXX`
 export facter_hs_db='headscale'
 
-
 ### Optional change items
 
-# Set to false if you want to disable the internal DNS
+# Set to false if you want to disable the other services
 export facter_dns_enable='true'
+export facter_mail_enable='true'
 # Change to true if you want FreeDNS secondaries to mirror your domain
 export facter_freedns_secondary='true'
 export facter_dns_upstream='1.1.1.1'

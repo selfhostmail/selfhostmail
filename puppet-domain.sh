@@ -27,18 +27,35 @@ source ./functions.sh
 
 ### Get opts
 
-usage() { echo -e "Usage:\n\n-i [true/false]\tInstall pre-reqs\n-p [string]\tAdmin password\n-m [string]\tMy Domain\n-l [string]\tLets Encrypt contact email\n-u [true/false]\tRun zone updates on DNS, false after first run\n\n"; exit 1; }
+usage() { echo -e "Usage:
+
+-a [true/false]\t\tEnable Mail services (default: false)
+-c [true/false]\t\tEnable wireguard client (default: false)
+-d [true/false]\t\tEnable Named authoritative DNS (default: false)
+-f [true/false]\t\tEnable firezone server (default: false)
+-h [true/false]\t\tEnable headscale server (default: false)
+-i [true/false]\t\tInstall pre-reqs (default: true)
+-l [string]\t\tLets Encrypt contact email (default: no default)
+-m [string]\t\tMy Domain (default: example.com)
+-p [string]\t\tAdmin password (no default)
+-u [true/false]\t\tRun zone updates on DNS, true first run, false after first run
+\n"; exit 1; }
+
 
 exec_dir=$(pwd)
 i="true"          # install puppet/deps
 d="true"          # install DNS
-while getopts ":i:p:m:d:l:u:" o; do
+while getopts ":a:c:f:h:i:p:m:d:l:u:" o; do
     case "${o}" in
         i) i=${OPTARG} ;;
         p) admin_password=${OPTARG} ;;
         m) export facter_my_domain=${OPTARG} ;;
         l) export facter_le_email=${OPTARG} ;;
         d) export facter_dns_enable=${OPTARG} ;;
+        a) export facter_mail_enable=${OPTARG} ;;
+        f) export facter_firezone_enable=${OPTARG} ;;
+        h) export facter_headzone_enable=${OPTARG} ;;
+        c) export facter_wg_client_enable=${OPTARG} ;;
         u) u=${OPTARG} ;;
         *) usage ;;
     esac
@@ -95,9 +112,10 @@ elif [ $facter_headscale_enabled == "true" ]; then
     step_print "${iverb} headscale wireguard services.."
     puppet apply -l ${log_dir}/build_log ${exec_dir}/headscale.pp
 fi
-
-step_print "${iverb} postfix/dovecot services and seeding initial tables.."
-puppet apply -l ${log_dir}/build_log ${exec_dir}/postfix.pp
+if [ $facter_mail_enabled == 'true' ]; then
+    step_print "${iverb} postfix/dovecot services and seeding initial tables.."
+    puppet apply -l ${log_dir}/build_log ${exec_dir}/postfix.pp
+fi
 if [ $facter_dns_enable == 'true' ]; then
     step_print "${iverb} bind9 and setting up keys.."
     puppet apply -l ${log_dir}/build_log ${exec_dir}/dns.pp

@@ -19,7 +19,7 @@ A scripted, 'puppet apply' approach to building a secure mail and wireguard gate
 * nginx, basic default config for http to allow LetsEncrypt
   * If wireguard-server enabled, with ssl reverse proxy for firezone
 * opendkim/opendmarc/spf support
-* fail2ban for ssh
+* fail2ban for ssh, nginx, named, smtp
 * Lets Encrypt using nginx orchestration
 * firewalld orchestration for services
   * ssh/imap/smtp/http/https/domain/wireguard allowed in public
@@ -98,18 +98,22 @@ If you choose to go the named self-hosting route, be aware you'll need to setup 
 
 ## wireguard server
 
-Firezone is installed and uses the letsencrypt certs for nginx and tls. The embedded nginx/postgresql from their project is disabled and this uses your systems postgres/nginx that is configured with this puppet module.
+### Firezone
 
+Firezone uses the letsencrypt certs for nginx and tls. The embedded nginx/postgresql from their project is disabled and this uses your systems postgres/nginx that is configured with this puppet module.
+
+### Headscale
+
+Headscale uses the letsencrypt cert and nginx and exposes a local DERP/STUN server. Its untested but seemed to work...
 
 ## wireguard client
 
-The current support is very basic and generates a new client keypair and adds this to the server. You can use this to generate a 'wg0.conf' file for a secondary server using this config.
+The current support is very basic and requires a wg0.conf file to be placed in /root prior to the script being run, assuming you've generated this ahead of time on your wireguard service.
 
 ## TODO
 
 * Allow script to know about a 'primary' (aka mail1/ns1 server) and create itself as a 'secondary' dns/mx service)
 * NFS export/mount support to allow the above to share a maildir
-* fail2ban for DNS and http (currently ssh only)
 * LDAP/kerberos/freeipa support?
 * Make the password fields between the firezone and postfix DB tables be synchronized since they support the same password format! That would be cool. 
 * Allow this script to setup a secondary DNS/smtp service with NFS support baked in
@@ -158,7 +162,3 @@ The current support is very basic and generates a new client keypair and adds th
 # BUG REPORTS
 
 I didn't write any of the upstream packages here but am happy to use them and am happy to help you chase bugs in this script and puppet modules. I've forked (with PRs pending) a couple of puppet modules to make this work as I needed and will take bug reports for them here.
-
-# THANKS
-
-Thanks to the https://github.com/firezone/firezone project as I was able to replace my hacky scripted stuff with their slick UI.

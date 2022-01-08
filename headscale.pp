@@ -1,16 +1,19 @@
-# install derp
 include nginx
 
+# RHEL 8 only has go 1.14 and we need a bigger GO
 file {'/tmp/go1.17.6.linux-amd64.tar.gz':
   source => "https://go.dev/dl/go1.17.6.linux-amd64.tar.gz"
 }
 ->
 exec {'extract golang':
   command => "/usr/bin/rm -rf /usr/local/go && /usr/bin/tar -C /usr/local -xzf /tmp/go1.17.6.linux-amd64.tar.gz",
+  refreshonly => true
 }
--> exec {"Install derp":
+exec {'install derp':
   environment => [ 'GOPATH=/opt/headscale', 'HOME=/opt/headscale', 'GOCACHE=/opt/headscale' ],
   command => '/usr/local/go/bin/go install tailscale.com/cmd/derper@main',
+  require => Exec['extract golang'],
+  unless => '/usr/bin/test -e /opt/headscale/bin/derper'
 }
 -> file {"/etc/systemd/system/derp.service":
   ensure  => 'file',
@@ -25,7 +28,9 @@ WorkingDirectory=/tmp
 
 [Install]
 WantedBy=multi-user.target
-")
+"),
+  require => ['install derp'],
+  notify => Exec['daemon refresh']
 }
 -> group {"headscale":
   ensure => 'present',
@@ -70,6 +75,7 @@ WantedBy=multi-user.target
 -> file {"/usr/local/bin/headscale":
   source => 'https://github.com/juanfont/headscale/releases/download/v0.12.1/headscale_0.12.1_linux_amd64',
   mode   => "0755",
+  unless => '/usr/bin/test -e /usr/local/bin/headscale',
 }
 -> file {"/etc/headscale":
   ensure => 'directory',
@@ -175,9 +181,11 @@ RuntimeDirectory=headscale
 [Install]
 WantedBy=multi-user.target
 "),
+  notify => Exec['daemon refresh']
 }
--> exec {"reload daemon systemctl":
-  command => "/usr/bin/systemctl daemon-reload"
+-> exec {'daemon refresh':
+  command => "/usr/bin/systemctl daemon-reload",
+  refreshonly => true
 }
 -> service {"derp":
   ensure => 'running',
@@ -190,7 +198,6 @@ WantedBy=multi-user.target
 -> exec {"create first namespace":
   command => "/usr/local/bin/headscale namespaces create ${facts['my_domain']}_ns"
 }
-
 
 nginx::resource::upstream { 'headscale':
   ensure => 'present',
@@ -233,16 +240,6 @@ nginx::resource::server { "${facts['fqdn']}-ssl":
       },
   }
 }
-# I'm sure we'll need this soon
-#file {'/etc/firewalld/services/wireguard.xml':
-#  ensure => 'file',
-#  content => inline_template('<?xml version="1.0" encoding="utf-8"?>
-#<service>
-#  <short>wireguard</short>
-#  <description>WireGuard open UDP port <%= @wg_server_port -%> for client connections</description>
-#  <port protocol="udp" port="<%= @wg_server_port -%>"/>
-#</service>'),
-#}
 file {'/etc/firewalld/services/derp.xml':
   ensure => 'file',
   content => inline_template('<?xml version="1.0" encoding="utf-8"?>
