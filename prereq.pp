@@ -75,10 +75,10 @@ exec {'set automatic update to install':
 exec {'disable tuned':
   command => '/usr/bin/sed -i "s/daemon = 1/daemon = 0/" /etc/tuned/tuned-main.conf',
   unless  => '/usr/bin/grep "daemon = 0" /etc/tuned/tuned-main.conf"',
-  notify  => Exec['restart tuned']
+  notify  => Exec['stop tuned']
 }
--> exec {'restart tuned':
-  command => "/usr/bin/sytemctl restart tuned",
+-> exec {'stop tuned':
+  command => "/usr/bin/sytemctl stop tuned",
   refreshonly => true
 }
 
