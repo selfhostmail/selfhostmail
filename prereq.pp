@@ -80,17 +80,38 @@ class { '::logwatch':
   mail_from => "donotreply@${facts['my_domain']}",
   service   => [ 'All' ],
 }
+
 $local_whitelist = ['127.0.0.1']
+
 if $facts['freedns_secondary'] == 'true' {
   $whitelist = $local_whitelist + ['69.65.50.192']
 }
 else {
   $whitelist = $local_whitelist
 }
+
+$default_jails = [ 'ssh', 'ssh-ddos', 'selinux-ssh', 'nginx-http-auth', 'nginx-botsearch' ]
+$dns_jails     = [ 'named-refused' ]
+$mail_jails    = [ 'dovecot', 'postfix', 'postfix-rbl', 'postfix-sasl', 'recidive', 'sieve' ]
+
+# Puppet of course can't reassign vars since vars are const so we play the new stack shuffle
+if $facts['dns_enable'] == 'true' {
+  $stage1_jails = $default_jails + $dns_jails
+}
+else {
+  $stage1_jails = $default_jails
+}
+if $facts['mail_enable'] == 'true' {
+  $jails = $stage1_jails + $mail_jails
+}
+else {
+  $jails = $stage1_jails
+}
+
 class {'fail2ban':
   # Maybe one day there will be a rocky specific template
   config_file_template => "/etc/puppetlabs/code/modules/fail2ban/templates/CentOS/8/etc/fail2ban/jail.conf.epp",
-  jails                => [ 'ssh', 'ssh-ddos', 'dovecot', 'postfix', 'postfix-rbl', 'postfix-sasl', 'recidive', 'sieve', 'selinux-ssh', 'nginx-http-auth', 'nginx-botsearch', 'named-refused' ],
+  jails                => $jails,
   whitelist            => $whitelist
 }
 ->
