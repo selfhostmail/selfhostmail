@@ -35,11 +35,9 @@ usage() { echo -e "Usage:
 
 
 exec_dir=$(pwd)
-install_pre="true"          # install puppet/deps
-d="true"          # install DNS
 while getopts ":a:c:f:h:i:p:m:d:l:u:" o; do
     case "${o}" in
-        i) install_pre=${OPTARG} ;;
+        i) install_pre=${OPTARG:-true} ;;
         p) admin_password=${OPTARG} ;;
         m) export facter_my_domain=${OPTARG} ;;
         l) export facter_le_email=${OPTARG} ;;
@@ -69,10 +67,10 @@ step_print "Running - please be patient, this can take up to 10 minutes (or more
 step_print "Checking for previous config..."
 import_settings
 
-if [ "${u}" == 'true' ]; then
+if [ "${update_dns}" == 'true' ]; then
   step_print " *** Explicitly running the DNS zone updates/key generation"
   facter_update_dns=true
-elif [ "${u}" == 'false' ]; then
+elif [ "${update_dns}" == 'false' ]; then
   step_print " *** Explicitly NOT running the DNS zone updates/key generation"
   facter_update_dns=false
 fi
