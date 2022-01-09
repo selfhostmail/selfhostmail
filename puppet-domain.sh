@@ -35,7 +35,7 @@ usage() { echo -e "Usage:
 
 
 exec_dir=$(pwd)
-i="true"          # install puppet/deps
+install_pre="true"          # install puppet/deps
 d="true"          # install DNS
 while getopts ":a:c:f:h:i:p:m:d:l:u:" o; do
     case "${o}" in
