@@ -13,14 +13,6 @@ else
     admin_password='none'
 fi
 admin_password=${admin_password:-0}
-if [ "${admin_password}" == '0' ]; then
-    echo -e "Enter the initial password for your user: "
-    read -s admin_password
-fi
-
-if [ -e ${log_dir}/build_log ]; then
-    mv ${log_dir}/build_log ${log_dir}/build_log-`date +%Y%m%d-%T`
-fi
 
 source ./vars.sh
 source ./functions.sh
@@ -61,6 +53,14 @@ while getopts ":a:c:f:h:i:p:m:d:l:u:" o; do
     esac
 done
 
+if [ "${admin_password}" == '0' ]; then
+    echo -e "Enter the initial password for your user: "
+    read -s admin_password
+fi
+
+if [ -e ${log_dir}/build_log ]; then
+    mv ${log_dir}/build_log ${log_dir}/build_log-`date +%Y%m%d-%T`
+fi
 
 #### First, import settings and install pre-reqs
 
