@@ -67,6 +67,17 @@ exec {'set automatic update to install':
   unless  => '/usr/bin/systemctl is-enabled dnf-automatic.timer'
 }
 
+## Disable tuned as a daemon, 100M resident is a lot for nothing in the cloud, this will load profile only on restart of service
+exec {'disable tuned':
+  command => '/usr/bin/sed -i "s/daemon = 1/daemon = 0/" /etc/tuned/tuned-main.conf',
+  unless  => '/usr/bin/grep "daemon = 0" /etc/tuned/tuned-main.conf"',
+  notify  => Exec['restart tuned']
+}
+-> exec {'restart tuned':
+  command => "/usr/bin/sytemctl restart tuned",
+  refreshonly => true
+}
+
 class { 'clamav':
   manage_clamd      => true,
   manage_freshclam  => true,
@@ -81,7 +92,9 @@ class { '::logwatch':
   service   => [ 'All' ],
 }
 
-$local_whitelist = ['127.0.0.1']
+$dns_secondary = split($facts['dns_secondary_list'], ',')
+
+$local_whitelist = ['127.0.0.1'] + $dns_secondary
 
 if $facts['freedns_secondary'] == 'true' {
   $whitelist = $local_whitelist + ['69.65.50.192']
@@ -190,6 +203,7 @@ exec {'daemon-reload':
   refreshonly => true,
   require => Class['nginx'],
 }
+
 if $facts['firezone_enabled'] =='true' or $facts['headscale_enabled'] == 'true' {
   selinux::boolean { 'httpd_can_network_connect': }
 

@@ -41,6 +41,8 @@ export facter_dns_enable='true'
 export facter_mail_enable='true'
 # Change to true if you want FreeDNS secondaries to mirror your domain
 export facter_freedns_secondary='true'
+# Add another secondary if you like, like '1.1.1.1,2.2.2.2,3.3.3.3'
+export facter_dns_secondary_list=''
 export facter_dns_upstream='1.1.1.1'
 
 # Add array items here if you have more domains, CSV please on this one

@@ -114,9 +114,9 @@ The current support is very basic and requires a wg0.conf file to be placed in /
 
 * Allow script to know about a 'primary' (aka mail1/ns1 server) and create itself as a 'secondary' dns/mx service)
 * NFS export/mount support to allow the above to share a maildir
-* LDAP/kerberos/freeipa support?
-* Make the password fields between the firezone and postfix DB tables be synchronized since they support the same password format! That would be cool. 
-* Allow this script to setup a secondary DNS/smtp service with NFS support baked in
+* dnsmasq or unbound or something to manage the wireguard clients and a script to keep it up-to-date
+* Make the password fields between the firezone and postfix DB tables be synchronized since they support the same password format! That would be cool.
+* Allow for an external postgresql definition for either firezone or postfix/dovecot
 
 ## IN PROGRESS
 
@@ -162,3 +162,20 @@ The current support is very basic and requires a wg0.conf file to be placed in /
 # BUG REPORTS
 
 I didn't write any of the upstream packages here but am happy to use them and am happy to help you chase bugs in this script and puppet modules. I've forked (with PRs pending) a couple of puppet modules to make this work as I needed and will take bug reports for them here.
+
+# PERSONAL USE
+
+Myself, I don't run the wireguard ingress on my mail server anymore, so I have a bootstrap problem. So here are 'in a nutshell' the steps I take. Most of this is done in terraform so its more or less automatic ish.
+
+1. Provision with your cloud provider using your registrar DNS a host with an FQDN of door.primary.com.
+2. Ensure there is at least temporarily an @ record for primary.com pointed at door.primary.com, keeping the TTL at 120 or less.
+3. Clone the repo and run with no changes the command `./puppet-domain.sh -a false -d false -f true -l change@letsencrypt.org -m primary.org`
+4. Initialize the firezone user and create a new device with a new wireguard client config.
+5. Provision with your cloud provider using their DNS a host with an FQDN of mail.primary.com and switch the @ record over.
+6. Clone the repo and edit vars.sh to add your other domains and the record for 'door.primary.com'
+7. Run the command `./puppet-domain.sh -a true -c true -d true -l change@letsencrypt.org -m primary.org`
+7. Go over to your registrar and ensure the nameservers are pointed at your cloud provider, then add the appropriate glue records for the primary.org domain.
+8. Ensure that on all the other domains the nameservers are just pointed directly at your new nameservers (and the freedns.afraig.org secondard backups).
+
+Now you can create a new client for your personal device and setup IMAP access. Note that you'll have to use the internal wireguard IP address at this time.
+
