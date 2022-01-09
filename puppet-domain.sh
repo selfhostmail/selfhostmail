@@ -33,11 +33,11 @@ usage() { echo -e "Usage:
 -u [true/false]\t\tRun zone updates on DNS, true first run, false after first run
 \n"; exit 1; }
 
-
+install_pre='true'
 exec_dir=$(pwd)
 while getopts ":a:c:f:h:i:p:m:d:l:u:" o; do
     case "${o}" in
-        i) install_pre=${OPTARG:-true} ;;
+        i) install_pre=${OPTARG} ;;
         p) admin_password=${OPTARG} ;;
         m) export facter_my_domain=${OPTARG} ;;
         l) export facter_le_email=${OPTARG} ;;
@@ -124,10 +124,8 @@ if [ $facter_dns_enable == 'true' ]; then
     fi
 fi
 
-step_print "Done!\n\n\n"
-
 if [ $FIRST_RUN == 'true' ]; then
-    if [ $facter_wg_server_enabled == 'true' ]; then
+    if [ $facter_firezone_enabled == 'true' ]; then
         msg_print "You will need to run \e[1m'firezone-ctl create-or-reset-admin'\e[0m to enable the account for ${facter_admin_user}@${facter_my_domain}. The password will be displayed on your screen and is different than your email password."
     fi
     if [ $facter_dns_enable == 'true' ]; then
@@ -135,13 +133,20 @@ if [ $FIRST_RUN == 'true' ]; then
         if ! [ -z $facter_my_other_domains ]; then
             msg_print "You can also use this server as an authoritative domain for:\n${facter_my_other_domains}"
         fi
-        msg_print "The following txt files contain the DNSSEC records you'll need to add at your upstream provider: $(ls /root/DS_FOR_REGISTRAR_*) - DNSSEC will not have a full chain of trust until you do."
+        if [ $facter_mail_enable == 'true']; then
+            msg_print "The following txt files contain the DNSSEC records you'll need to add at your upstream provider: $(ls /root/DS_FOR_REGISTRAR_*) - DNSSEC will not have a full chain of trust until you do."
+        fi
     else
-        msg_print "In order for DKIM to work, you'll need to add the following TXT record to your domain:\n\n$(cat /etc/opendkim/keys/${facter_my_domain}/`date +%Y%m%d`.txt)"
-        msg_print "And an spf record similar to this will work: 'v=spf1 +mx a:${HOSTNAME} ip4:$(facter networking.ip) -all' though you can replace the hostname with your IP for less DNS lookups."
-        msg_print "And DMARC for better spam catches:\n\n 'v=DMARC1;p=quarantine;pct=100;rua=mailto:postmaster@${facter_my_domain}'"
-        msg_print "You can also enable DNS by changing the variable to enabled and re-running this script."
+        if [ $facter_mail_enable == 'true']; then
+            msg_print "In order for DKIM to work, you'll need to add the following TXT record to your domain:\n\n$(cat /etc/opendkim/keys/${facter_my_domain}/`date +%Y%m%d`.txt)"
+            msg_print "And an spf record similar to this will work: 'v=spf1 +mx a:${HOSTNAME} ip4:$(facter networking.ip) -all' though you can replace the hostname with your IP for less DNS lookups."
+            msg_print "And DMARC for better spam catches:\n\n 'v=DMARC1;p=quarantine;pct=100;rua=mailto:postmaster@${facter_my_domain}'"
+            msg_print "You can also enable DNS by changing the variable to enabled and re-running this script."
+        fi
     fi
-    msg_print "You can add or remove users using the vmailctl script. If you accidentally mess up a config file or set it by hand, just run this script again.\n"
+    if [ $facter_mail_enable == 'true']; then
+        msg_print "You can add or remove users using the vmailctl script. If you accidentally mess up a config file or set it by hand, just run this script again.\n"
+    fi
 fi
-  
+
+step_print "Done!\n\n"
