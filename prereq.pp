@@ -82,14 +82,18 @@ exec {'disable tuned':
   refreshonly => true
 }
 
-class { 'clamav':
-  manage_clamd      => true,
-  manage_freshclam  => true,
-  clamd_options     => {
-    'MaxScanSize' => '500M',
-    'MaxFileSize' => '150M',
-  },
+# Clamav is a serious memory hog
+if $facts['mail_enable'] == 'true' {
+  class { 'clamav':
+    manage_clamd      => true,
+    manage_freshclam  => true,
+    clamd_options     => {
+      'MaxScanSize' => '500M',
+      'MaxFileSize' => '150M',
+    },
+  }
 }
+
 class { '::logwatch':
   mail_to   => [ $admin_email ],
   mail_from => "donotreply@${facts['my_domain']}",
@@ -181,7 +185,7 @@ firewalld_zone { 'public':
     zone    => 'public',
 }
 -> nginx::resource::server{"${facts['fqdn']}-80":
-  www_root => '/usr/share/nginx/html/',
+  www_root    => '/usr/share/nginx/html/',
   server_name => [ $facts['fqdn'], $facts['my_domain'] ]
 }
 -> class { 'letsencrypt':
