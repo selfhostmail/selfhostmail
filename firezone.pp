@@ -153,4 +153,4 @@ file {'/etc/firewalld/services/wireguard.xml':
   command => "/usr/bin/systemctl restart firewalld",
   refreshonly => true
 }
-
+selinux::boolean { 'httpd_setrlimit': }
