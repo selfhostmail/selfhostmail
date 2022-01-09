@@ -11,12 +11,14 @@ function msg_print() {
 }
 
 function import_settings() {
-    source <(grep = /root/.puppet_domain) &> /dev/null
+    if [ -e /root/.puppet_domain ]; then
+        source <(grep = /root/.puppet_domain)
+    fi
     if ! [ -z $my_domain ]; then
         msg_print "Previous config found: Using ${my_domain}..."
         facter_my_domain=$my_domain
         facter_update_dns='false'
-        i=false
+        install_pre=false
         msg_print "Using existing packages.."
     else
         msg_print "No previous config found: Using ${facter_my_domain} as primary domain..."
