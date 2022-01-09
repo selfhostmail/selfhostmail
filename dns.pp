@@ -82,8 +82,9 @@ class {'bind':
   server_id              => 'none',
   zone                   => $zones,
   include                => [ '"/etc/named.rfc1912.zones"', '"/etc/named.root.key"' ],
+  notify                 => Exec['restart named']
 }
--> exec {"restart named":
+exec {"restart named":
   command     => "/usr/bin/systemctl restart named",
   refreshonly => true
 }
@@ -168,7 +169,7 @@ $my_domains.each |$this_domain| {
   -> exec {"create DS records for ${this_domain} in roots home":
     command => "/usr/sbin/dnssec-dsfromkey /var/named/keys/$(cat /tmp/ksk_file_name_${this_domain}) > /root/DS_FOR_REGISTRAR_${this_domain}.db.txt",
     refreshonly => true,
-    notify  => Service['named']
+    notify  => Exec['restart named']
   }
 }
 firewalld_service { 'Allow dns from the external zone':
