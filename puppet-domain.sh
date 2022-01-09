@@ -103,7 +103,7 @@ puppet apply -l ${log_dir}/build_log ${exec_dir}/database.pp
 
 if [ $facter_wg_client_enabled == "true" ]; then
     step_print "${iverb} wireguard client service.."
-    puppet apply -l ${log_dir}/build_log ${exec_dir}/wg_client.pp
+    puppet apply -l ${log_dir}/build_log ${exec_dir}/wg-client.pp
 elif [ $facter_firezone_enabled == "true" ]; then
     step_print "${iverb} firezone wireguard services.."
     puppet apply -l ${log_dir}/build_log ${exec_dir}/firezone.pp
