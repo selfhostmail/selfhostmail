@@ -113,7 +113,7 @@ function install_wg_packages() {
 function install_puppet_module() {
     module=$1
     repopath=$2
-    IFS=- read $pup_module <<< "$module"
+    IFS=- read $pup_path $pup_module <<< "$module"
     msg_print "Installing ${module}"
     if ! [ -e "/etc/puppetlabs/code/modules/${module}" ] || ! [ -e "/etc/puppetlabs/code/modules/${pup_module}" ]; then
         if ! [ -z $repopath ]; then
