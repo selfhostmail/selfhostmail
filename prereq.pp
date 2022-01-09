@@ -16,10 +16,14 @@ include nginx
 
 notify {"installing prereqs, updates, antivirus, logwatch, and more": }
 
-exec {'update-dnf and powertools':
-  command => '/usr/bin/dnf -y update; /usr/bin/dnf config-manager --set-enabled powertools',
+exec {'update-dnf':
+  command => '/usr/bin/dnf -y update',
+}
+exec {'powertools':
+  command => '/usr/bin/dnf config-manager --set-enabled powertools',
   unless  => '/usr/bin/ls /etc/yum.repos.d/*-PowerTools.repo',
 }
+
 
 $default_packages = [
   'wget', 'unzip', 'curl', 'net-tools', 'neofetch', 'python3-certbot-nginx.noarch', 
