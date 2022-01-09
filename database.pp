@@ -153,6 +153,7 @@ if $facts['mail_enable'] == 'true' {
     ensure    => present,
     role      => $facts['pf_user'],
   }
+}
 if $facts['firezone_enabled'] == 'true' {
   postgresql::server::role { "${facts['fz_user']}":
     password_hash    => postgresql::postgresql_password($facts['fz_user'], $facts['fz_password']),
