@@ -77,6 +77,7 @@ fi
 
 if [ $install_pre == 'true' ]; then
     # Install necessary deps
+    step_print " *** Installing necessary yum and puppet modules"
     install_yum_repos
     install_puppet_modules
 fi
