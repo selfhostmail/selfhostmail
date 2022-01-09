@@ -43,8 +43,8 @@ while getopts ":a:c:f:h:i:p:m:d:l:u:" o; do
         l) export facter_le_email=${OPTARG} ;;
         d) export facter_dns_enable=${OPTARG} ;;
         a) export facter_mail_enable=${OPTARG} ;;
-        f) export facter_firezone_enable=${OPTARG} ;;
-        h) export facter_headzone_enable=${OPTARG} ;;
+        f) export facter_firezone_enabled=${OPTARG} ;;
+        h) export facter_headzone_enabled=${OPTARG} ;;
         c) export facter_wg_client_enable=${OPTARG} ;;
         u) update_dns=${OPTARG} ;;
         *) usage ;;
