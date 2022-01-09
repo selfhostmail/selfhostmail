@@ -78,7 +78,7 @@ exec {'disable tuned':
   notify  => Exec['stop tuned']
 }
 -> exec {'stop tuned':
-  command => "/usr/bin/sytemctl stop tuned",
+  command => "/usr/bin/systemctl stop tuned",
   refreshonly => true
 }
 
