@@ -133,11 +133,11 @@ if [ $FIRST_RUN == 'true' ]; then
         if ! [ -z $facter_my_other_domains ]; then
             msg_print "You can also use this server as an authoritative domain for:\n${facter_my_other_domains}"
         fi
-        if [ $facter_mail_enable == 'true']; then
+        if [ $facter_mail_enable == 'true' ]; then
             msg_print "The following txt files contain the DNSSEC records you'll need to add at your upstream provider: $(ls /root/DS_FOR_REGISTRAR_*) - DNSSEC will not have a full chain of trust until you do."
         fi
     else
-        if [ $facter_mail_enable == 'true']; then
+        if [ $facter_mail_enable == 'true' ]; then
             msg_print "In order for DKIM to work, you'll need to add the following TXT record to your domain:\n\n$(cat /etc/opendkim/keys/${facter_my_domain}/`date +%Y%m%d`.txt)"
             msg_print "And an spf record similar to this will work: 'v=spf1 +mx a:${HOSTNAME} ip4:$(facter networking.ip) -all' though you can replace the hostname with your IP for less DNS lookups."
             msg_print "And DMARC for better spam catches:\n\n 'v=DMARC1;p=quarantine;pct=100;rua=mailto:postmaster@${facter_my_domain}'"
