@@ -113,9 +113,13 @@ function install_wg_packages() {
 function install_puppet_module() {
     module=$1
     repopath=$2
-    IFS=- read $pup_path $pup_module <<< "$module"
-    msg_print "Installing ${module}"
-    if ! [ -e "/etc/puppetlabs/code/modules/${module}" ] || ! [ -e "/etc/puppetlabs/code/modules/${pup_module}" ]; then
+    pup_path=${module%%-*}
+    pup_module=${module#*-}
+    if [ -e $pup_module ]; then
+        pup_module=$module
+    fi
+    msg_print "Installing ${pup_module}"
+    if ! [ -d "/etc/puppetlabs/code/modules/${pup_module}" ]; then
         if ! [ -z $repopath ]; then
             cd /tmp && git clone -q ${github_project}/${repopath}-${module} && mv /tmp/${repopath}-${module} /etc/puppetlabs/code/modules/${module}
         else
