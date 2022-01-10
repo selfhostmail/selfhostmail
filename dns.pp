@@ -108,7 +108,7 @@ $my_domains.each |$this_domain| {
   notify {"Records in ${this_domain} to add: ${other_records[$this_domain]}": }
   # Add the root for mydomain, we won't do that on others since we don't know how they will be used
   if $facts['my_domain'] == $facts['this_domain'] {
-    $my_domain_rec =  "@        IN    A       ${facts['networking']['ip']"
+    $my_domain_rec =  "@        IN    A       ${facts['networking']['ip']}"
   }
   else {
     $my_domain_rec = []
