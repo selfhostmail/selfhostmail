@@ -120,8 +120,8 @@ function install_puppet_module() {
     if [ -e $pup_module ]; then
         pup_module=$module
     fi
-    msg_print "Installing ${pup_module}"
     if ! [ -d "/etc/puppetlabs/code/modules/${pup_module}" ]; then
+        msg_print "Installing ${pup_module}"
         if ! [ -z $repopath ]; then
             cd /tmp && git clone -q ${github_project}/${repopath}-${module} && mv /tmp/${repopath}-${module} /etc/puppetlabs/code/modules/${module}
         else

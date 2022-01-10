@@ -26,18 +26,15 @@ usage() { echo -e "Usage:
 -d [true/false]\t\tEnable Named authoritative DNS (default: false)
 -f [true/false]\t\tEnable firezone server (default: false)
 -h [true/false]\t\tEnable headscale server (default: false)
--i [true/false]\t\tInstall pre-reqs (default: true)
 -l [string]\t\tLets Encrypt contact email (default: no default)
 -m [string]\t\tMy Domain (default: example.com)
 -p [string]\t\tAdmin password (no default)
 -u [true/false]\t\tRun zone updates on DNS, true first run, false after first run
 \n"; exit 1; }
 
-install_pre='true'
 exec_dir=$(pwd)
-while getopts ":a:c:f:h:i:p:m:d:l:u:" o; do
+while getopts ":a:c:f:h:p:m:d:l:u:" o; do
     case "${o}" in
-        i) install_pre=${OPTARG} ;;
         p) admin_password=${OPTARG} ;;
         m) export facter_my_domain=${OPTARG} ;;
         l) export facter_le_email=${OPTARG} ;;
@@ -67,19 +64,18 @@ step_print "Running - please be patient, this can take up to 10 minutes (or more
 step_print "Checking for previous config..."
 import_settings
 
+# Install necessary deps
+step_print " *** Installing necessary yum and puppet modules"
+install_yum_repos
+install_puppet_modules
+
+
 if [ "${update_dns}" == 'true' ]; then
   step_print " *** Explicitly running the DNS zone updates/key generation"
   facter_update_dns=true
 elif [ "${update_dns}" == 'false' ]; then
   step_print " *** Explicitly NOT running the DNS zone updates/key generation"
   facter_update_dns=false
-fi
-
-if [ $install_pre == 'true' ]; then
-    # Install necessary deps
-    step_print " *** Installing necessary yum and puppet modules"
-    install_yum_repos
-    install_puppet_modules
 fi
 
 if [ ${facter_firezone_enabled} == 'true' ] || [ ${facter_wg_client_enabled} == 'true' ] || [ ${facter_headscale_enabled} == 'true' ]; then
