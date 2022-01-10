@@ -1,33 +1,40 @@
 notify{ "Installing named services: using ${facts['my_domain']} as primary domain": }
 
-$my_other_domain_list=split("${facts['my_other_domains']}", ',')
-$my_domains = $my_other_domain_list + $facts['my_domain']
 $admin_email="${admin_user}@${facts['my_domain']}"
 
+# Setup secondaries
 if $facts['freedns_secondary'] == 'true' {
   $axfer_list = '69.65.50.192;'
+}
+elsif $facts['dns_seconday_list'] != '' {
+  $axfer_list = "${facts['dns_seconday_list']};"
 }
 else {
   $axfer_list = 'none;'
 }
 
-# Hacky puppet doesn't allow rewriting vars so here's a hack
-$other_records = Hash($my_domains.map |$domain| {
-  $name = regsubst($domain, "[.]", "_", "G")
+# Grab the list of all domains and build some basic facts
+$my_other_domain_list=split("${facts['my_other_domains']}", ',')
+$my_domains = $my_other_domain_list + $facts['my_domain']
+
+# Hacky puppet doesn't allow rewriting vars so here's a hack to create a 'fact list' of other records per domain
+# See vars.sh for how to use facter_example_com_records, which is used here
+$other_records = Hash($my_domains.map |$dom| {
+  $name = regsubst($dom, "[.]", "_", "G")
   if $facts["${name}_records"] {
     $recs = split($facts["${name}_records"],'[|]')
-    [ $domain, $recs ]
+    [ $dom, $recs ]
   }
   else {
-    [ $domain, [] ]
+    [ $dom, [] ]
   }
 })
 
 # Make us authoritative for all of our domains
-$zones = $my_domains.map |$domain| {
-  [ $domain, [
+$zones = $my_domains.map |$dom| {
+  [ $dom, [
       'type master',
-      "file \"${domain}.db\"",
+      "file \"${dom}.db\"",
       'key-directory "/var/named/keys"',
       'auto-dnssec maintain',
       'inline-signing yes',
@@ -99,6 +106,13 @@ $my_domains.each |$this_domain| {
     $ns2 = "${this_domain}"
   }
   notify {"Records in ${this_domain} to add: ${other_records[$this_domain]}": }
+  # Add the root for mydomain, we won't do that on others since we don't know how they will be used
+  if $facts['my_domain'] == $facts['this_domain'] {
+    $my_domain_rec =  "@        IN    A       ${facts['networking']['ip']"
+  }
+  else {
+    $my_domain_rec = []
+  }
   $records = [
     "@        IN    NS      ns1.${this_domain}.",
     "@        IN    NS      ns2.${ns2}.",
@@ -106,8 +120,8 @@ $my_domains.each |$this_domain| {
     "ns2      IN    A       ${facts['networking']['ip']}",
     "@        IN    TXT     \"v=spf1 +mx ip4:${facts['networking']['ip']} -all\"",
     "_dmarc   IN    TXT     \"v=DMARC1; p=quarantine; rua=mailto:postmaster@${this_domain}; ruf=mailto:postmaster@${this_domain}; fo=1; pct=100\"",
-    "@        IN    MX  50  ${my_domain}."
-  ] + $other_records[$this_domain]
+    "@        IN    MX  50  ${this_domain}."
+  ] + $other_records[$this_domain] + $my_domain_rec
   if $facts['update_dns'] == 'true' {
     bind::zone_file { "${this_domain}.db":
       file_name       => "${this_domain}.db",
