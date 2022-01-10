@@ -58,8 +58,8 @@ If you need customizations to the stack, I recommend forking this project and co
 ```bash
 cd /root
 dnf install --assumeyes git
-git clone https://github.com/colonelpanik/self-host-puppet.git
-cd self-host-puppet
+git clone https://github.com/selfhostmail/selfhostmail.git
+cd selfhostmail
 
 # from here, edit at least the le_email and my_domain variable in puppet-domain.sh
 bash ./puppet-domain.sh

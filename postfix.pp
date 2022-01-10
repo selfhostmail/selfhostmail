@@ -324,7 +324,7 @@ postfix::conffile {'pgsql/relay_domains.cf':
 # We need to give postfix / dovecot / spamassassin some rights to the new file structure
 selinux::module { 'postfix-virtual':
   ensure    => 'present',
-  source_te => '/root/self-host-puppet/postfix-virtual.te',
+  source_te => '/root/selfhostmail/postfix-virtual.te',
 }
 
 
