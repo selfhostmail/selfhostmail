@@ -269,7 +269,7 @@ postfix::config {
   unless => '/usr/bin/grep "X-Originating-IP" /etc/postfix/header_checks'
 }
 
-postfix::hash { '/etc/postfix/virtual_alias_map':
+postfix::hash { '/etc/postfix/virtual_alias_maps':
   ensure  => 'present',
   content => $domain_alias
 }
