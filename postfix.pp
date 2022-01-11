@@ -15,6 +15,14 @@ $my_other_domain_list=split("${facts['my_other_domains']}", ',')
 $my_domains = $my_other_domain_list + $facts['my_domain']
 $admin_email="${admin_user}@${facts['my_domain']}"
 
+# Create a map of our aliases to our primary domain if we're aliasing those domains
+if $facts['enable_domain_alias'] == 'true' {
+  $domain_alias = join($my_other_domain_list.map |$x| { "@${x} @${facts['my_domain']}" }, "\n")
+}
+else {
+  $domain_alias = ''
+}
+
 ### Postfix pre-requisites
 
 # Enable and start postgrey
@@ -170,7 +178,7 @@ class { 'postfix':
     -o smtpd_client_restrictions=permit_mynetworks,reject
     -o smtpd_helo_restrictions=
     -o smtpd_sender_restrictions=
-    -o smtpd_recipient_restrictions=permit_mynetworks,reject
+    -o smtpd_recipient_restrictions=permit_sasl_autheticated,permit_mynetworks,reject
     -o smtpd_end_of_data_restrictions=
     -o smtpd_error_sleep_time=0
     -o smtpd_soft_error_limit=1001
@@ -210,7 +218,7 @@ postfix::config {
     'smtpd_use_tls': value => 'yes';
     'tls_random_source': value => 'dev:/dev/urandom';
     'tls_random_exchange_name': value => '/var/lib/postfix/prng_exch';
-    'virtual_alias_maps': value => 'proxy:pgsql:/etc/postfix/pgsql/virtual_alias_maps.cf';
+    'virtual_alias_maps': value => 'hash:/etc/postfix/virtual_alias_maps proxy:pgsql:/etc/postfix/pgsql/virtual_alias_maps.cf';
     'virtual_mailbox_domains': value => 'proxy:pgsql:/etc/postfix/pgsql/virtual_mailbox_domains.cf';
     'virtual_mailbox_maps': value => 'proxy:pgsql:/etc/postfix/pgsql/virtual_mailbox_maps.cf';
     'relay_domains': value => '$mydestination, proxy:pgsql:/etc/postfix/pgsql/relay_domains.cf';
@@ -259,6 +267,11 @@ postfix::config {
 /^User-Agent:/                  IGNORE
 ' > /etc/postfix/header_checks",
   unless => '/usr/bin/grep "X-Originating-IP" /etc/postfix/header_checks'
+}
+
+postfix::hash { '/etc/postfix/virtual_alias_map':
+  ensure  => 'present',
+  content => $domain_alias
 }
 
 postfix::conffile {'pgsql/virtual_alias_maps.cf':

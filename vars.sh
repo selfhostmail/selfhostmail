@@ -56,3 +56,6 @@ export facter_example_com_records="ns3      IN    A       10.1.1.1|www     IN   
 # Used as root for getting forked (fixed) puppet modules - NOT the repo you got the script from! Hopefully the PRs will be merged and I can remove the forked modules.
 export github_project="https://github.com/colonelpanik/"
 
+# By default all virtual domains in your virtual_domains table will alias to your primary domain, meaining if admin@other.com is received, it will alias it over to admin@primary.com
+# Basically any user in your primary domain gets a free user in all virtual domains. Handy for ensuring the hostmaster and abuse aliases work.
+export facter_enable_domain_alias='true'

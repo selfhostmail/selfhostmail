@@ -118,9 +118,10 @@ $my_domains.each |$this_domain| {
     "@        IN    NS      ns2.${ns2}.",
     "ns1      IN    A       ${facts['networking']['ip']}",
     "ns2      IN    A       ${facts['networking']['ip']}",
+    "mail     IN    A       ${facts['networking']['ip']}",
     "@        IN    TXT     \"v=spf1 +mx ip4:${facts['networking']['ip']} -all\"",
     "_dmarc   IN    TXT     \"v=DMARC1; p=quarantine; rua=mailto:postmaster@${this_domain}; ruf=mailto:postmaster@${this_domain}; fo=1; pct=100\"",
-    "@        IN    MX  50  ${this_domain}."
+    "@        IN    MX  50  mail.${this_domain}."
   ] + $other_records[$this_domain] + $my_domain_rec
   if $facts['update_dns'] == 'true' {
     bind::zone_file { "${this_domain}.db":
@@ -152,7 +153,11 @@ $my_domains.each |$this_domain| {
     exec {"add dkim records-${this_domain}":
       command => "/usr/bin/sed -E 's/[()]//g' /etc/opendkim/keys/${this_domain}/*.txt | /usr/bin/tr -d '\n' >> /var/named/${this_domain}.db",
       unless  => "/usr/bin/grep 'domainkey' /var/named/${this_domain}.db",
-      notify  => Service['named']
+      notify  => [ Service['named'], Exec['add ending newline'] ]
+    }
+    exec {"add ending newline":
+      command => "/usr/bin/echo -e \"\\n\" >> /var/named/${his_domain}.db",
+      refreshonly => true
     }
   }
   exec {"make zsk for ${this_domain}":
@@ -171,7 +176,7 @@ $my_domains.each |$this_domain| {
     refreshonly => true,
   }
   -> exec {"load keys ${this_domain}":
-    command => "/usr/sbin/rndc reload; /usr/sbin/rndc reconfid; /usr/sbin/rndc loadkeys ${this_domain}",
+    command => "/usr/sbin/rndc reload; /usr/sbin/rndc reconfig; /usr/sbin/rndc loadkeys ${this_domain}",
     notify => Exec["sign keys ${this_domain}"],
     refreshonly => true
   }
