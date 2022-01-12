@@ -157,11 +157,6 @@ file {'/etc/firewalld/services/wireguard.xml':
 }
 selinux::boolean { 'httpd_setrlimit': }
 
-# Enable dnsmasq
-# Set local domains to go to the local bind9 server. The rest will go upstream to 1.1.1.1
-
-$server_block = join ($my_domains.map |$dom| { "address=/${dom}/${facts['networking']['ip']}" }, "\n")
-
 package { "dnsmasq":
   ensure => latest
 }
@@ -172,7 +167,6 @@ file {"/etc/dnsmasq.conf":
 bogus-priv
 no-resolv
 no-poll
-${server_block}
 server=1.1.1.1
 user=dnsmasq
 group=dnsmasq
@@ -182,4 +176,12 @@ no-hosts
 no-negcache
 conf-dir=/etc/dnsmasq.d,.rpmnew,.rpmsave,.rpmorig"),
   require => Package['dnsmasq']
+}
+-> service => {"dnsmasq":
+  ensure => 'running',
+  enable => 'true'
+}
+-> exec {"set resolv to dnsmasq":
+  command => "/usr/bin/sed -E '0,/nameserver/{s/^(nameserver.*)/nameserver ${facts['networking']['wg']}\\n\\1/}' /etc/resolv.conf",
+  unless  => "/usr/bin/grep 'nameserver ${facts['networking']['wg']}' /etc/resolv.conf"
 }
