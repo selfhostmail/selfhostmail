@@ -24,7 +24,6 @@ exec {'powertools':
   unless  => '/usr/bin/ls /etc/yum.repos.d/*-PowerTools.repo',
 }
 
-
 $default_packages = [
   'wget', 'unzip', 'curl', 'net-tools', 'neofetch', 'python3-certbot-nginx.noarch', 
   'dnf-automatic', 'postgresql-contrib',
@@ -54,11 +53,37 @@ if $facts['mail_enable'] == 'true' {
   }
 }
 
+# First lets turn on the firewall
+
+class {'firewalld': }
+
+firewalld_zone { 'public':
+    ensure           => present,
+    target           => '%%REJECT%%',
+    purge_rich_rules => true,
+    purge_services   => true,
+    purge_ports      => true,
+}
+-> firewalld_service { 'Allow SSH from the external zone':
+    ensure  => 'present',
+    service => 'ssh',
+    zone    => 'public',
+}
+-> firewalld_service { 'Allow http from the external zone':
+    ensure  => 'present',
+    service => 'http',
+    zone    => 'public',
+}
+-> firewalld_service { 'Allow https from the public zone':
+    ensure  => 'present',
+    service => 'https',
+    zone    => 'public',
+}
 
 ## Neo fetch is cool
 file {'/etc/profile.d/motd.sh':
   mode => '0775',
-  content => 'neofetch --disable gpu --disable resolution',
+  content => 'neofetch --disable gpu --disable resolution --disable term --disable theme --disable wm --disable de --disable packages --disable shell --disable kernel --disable model --disable term_font',
   require => Package['neofetch']
 }
 exec {'set automatic update to install':
@@ -160,30 +185,24 @@ if $facts['mail_enable'] == 'true' {
     zone    => 'public',
   }
 }
-class {'firewalld': }
 
-firewalld_zone { 'public':
-    ensure           => present,
-    target           => '%%REJECT%%',
-    purge_rich_rules => true,
-    purge_services   => true,
-    purge_ports      => true,
+if $facts['dns_enabled'] {
+  firewalld_port { 'Allow 53/udp from the external zone':
+    ensure   => 'present',
+    port     => '53',
+    protocol => 'udp'
+    zone     => 'public',
+  }
+  firewalld_port { 'Allow 53/tcp from the external zone':
+    ensure   => 'present',
+    port     => '53',
+    protocol => 'tcp'
+    zone     => 'public',
+  }
 }
--> firewalld_service { 'Allow SSH from the external zone':
-    ensure  => 'present',
-    service => 'ssh',
-    zone    => 'public',
-}
--> firewalld_service { 'Allow http from the external zone':
-    ensure  => 'present',
-    service => 'http',
-    zone    => 'public',
-}
--> firewalld_service { 'Allow https from the public zone':
-    ensure  => 'present',
-    service => 'https',
-    zone    => 'public',
-}
+
+
+
 -> nginx::resource::server{"${facts['fqdn']}-80":
   www_root    => '/usr/share/nginx/html/',
   server_name => [ $facts['fqdn'], $facts['my_domain'] ]
