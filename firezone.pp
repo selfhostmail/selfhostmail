@@ -5,6 +5,8 @@ $version="0.2.2"
 $filename="firezone_${version}-centos8-amd64.rpm"
 $remote_file="https://github.com/firezone/firezone/releases/download/${version}/${filename}"
 
+$my_other_domain_list=split("${facts['my_other_domains']}", ',')
+$my_domains = $my_other_domain_list + $facts['my_domain']
 
 file { "/root/${filename}":
   source => $remote_file,
@@ -36,12 +38,12 @@ exec { "install firezone":
   -> exec {"set admin email for firezone":
   command     => "/usr/bin/sed -r -i \"s/^#*\s*(default\\['firezone'\\]\\['admin_email'\\]) =.*/\\1 = '${admin_email}'/\" /etc/firezone/firezone.rb",
   unless      => "/usr/bin/grep -e \"^default\\['firezone'\\]\\['admin_email'\\]\" /etc/firezone/firezone.rb",
-notify      => Exec['refresh firezone config']
+  notify      => Exec['refresh firezone config']
 }
 -> exec {"set pgsql for firezone":
   command     => "/usr/bin/sed -r -i \"s/^# # (default\\['firezone'\\]\\['postgresql'\\]\\['enabled'\\]) =.*/\\1 = false/\" /etc/firezone/firezone.rb",
   unless      => "/usr/bin/grep -q -e \"^default\\['firezone'\\]\\['postgresql'\\]\\['enabled'\\] = false\" /etc/firezone/firezone.rb",
-notify      => Exec['refresh firezone config']
+  notify      => Exec['refresh firezone config']
 }
 -> exec {"set pgsqluser for firezone":
   command     => "/usr/bin/sed -r -i \"s/^# # (default\\['firezone'\\]\\['database'\\]\\['user'\\]) =.*/\\1 = '${facts['fz_user']}'/\" /etc/firezone/firezone.rb",
@@ -51,7 +53,7 @@ notify      => Exec['refresh firezone config']
 -> exec {"set pgsql dbname for firezone":
   command     => "/usr/bin/sed -r -i \"s/^# # (default\\['firezone'\\]\\['database'\\]\\['name'\\]) =.*/\\1 = '${facts['fz_db']}'/\" /etc/firezone/firezone.rb",
   unless      => "/usr/bin/grep -e \"^default\\['firezone'\\]\\['database'\\]\\['name'\\] = '${facts['fz_db']}'\" /etc/firezone/firezone.rb",
-notify      => Exec['refresh firezone config']
+  notify      => Exec['refresh firezone config']
 }
 -> exec {"set pgsql dbhost for firezone":
   command     => "/usr/bin/sed -r -i \"s/^# # (default\\['firezone'\\]\\['database'\\]\\['host'\\]) =.*/\\1 = '127.0.0.1'/\" /etc/firezone/firezone.rb",
@@ -66,7 +68,7 @@ notify      => Exec['refresh firezone config']
 -> exec {"set nginx disable for firezone":
   command     => "/usr/bin/sed -r -i \"s/^# (default\\['firezone'\\]\\['nginx'\\]\\['enabled'\\]) =.*/\\1 = false/\" /etc/firezone/firezone.rb",
   unless      => "/usr/bin/grep -e \"^default\\['firezone'\\]\\['nginx'\\]\\['enabled'\\] = false\" /etc/firezone/firezone.rb",
-notify      => Exec['refresh firezone config']
+  notify      => Exec['refresh firezone config']
 }
 ### When this is added, change to sed
 -> exec {"set db pw for firezone":
@@ -154,3 +156,30 @@ file {'/etc/firewalld/services/wireguard.xml':
   refreshonly => true
 }
 selinux::boolean { 'httpd_setrlimit': }
+
+# Enable dnsmasq
+# Set local domains to go to the local bind9 server. The rest will go upstream to 1.1.1.1
+
+$server_block = join ($my_domains.map |$dom| { "address=/${dom}/${facts['networking']['ip']}" }, "\n")
+
+package { "dnsmasq":
+  ensure => latest
+}
+->
+file {"/etc/dnsmasq.conf":
+  ensure => file,
+  content => inline_template("domain-needed
+bogus-priv
+no-resolv
+no-poll
+${server_block}
+server=1.1.1.1
+user=dnsmasq
+group=dnsmasq
+except-interface=eth0
+bind-interfaces
+no-hosts
+no-negcache
+conf-dir=/etc/dnsmasq.d,.rpmnew,.rpmsave,.rpmorig"),
+  require => Package['dnsmasq']
+}

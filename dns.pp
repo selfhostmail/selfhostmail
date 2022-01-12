@@ -58,7 +58,7 @@ file {'/var/named/keys':
 }
 
 class {'bind':
-  listen_on              => 'port 53 { any; }',
+  listen_on              => "port 53 { ${facts['networking']['ip']}; }",
   listen_on_v6           => 'port 53 { any; }',
   allow_query            => '{ any; }',
   allow_update           => '{ none; }',
@@ -191,8 +191,15 @@ $my_domains.each |$this_domain| {
     notify  => Exec['restart named']
   }
 }
-firewalld_service { 'Allow dns from the external zone':
-    ensure  => 'present',
-    service => 'dns',
-    zone    => 'public',
+firewalld_port { 'Allow 53/udp from the external zone':
+    ensure   => 'present',
+    port     => '53',
+    protocol => 'udp'
+    zone     => 'public',
+}
+firewalld_port { 'Allow 53/tcp from the external zone':
+    ensure   => 'present',
+    port     => '53',
+    protocol => 'tcp'
+    zone     => 'public',
 }
