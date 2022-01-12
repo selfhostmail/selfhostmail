@@ -28,7 +28,7 @@ export facter_fz_password=`mktemp -u XXXXXXXXXXXXXXXXXXXXXX`
 #export facter_fz_password='postgres'
 export facter_fz_db='firezone'                 # Database name for postfix
 export facter_wg_server_port=51820
-
+export facter_wg_server_ip=10.3.2.1
 # Headscale settings
 export facter_hs_user='headscale'
 export facter_hs_password=`mktemp -u XXXXXXXXXXXXXXXXXXXXXX`
