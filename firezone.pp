@@ -177,7 +177,7 @@ no-negcache
 conf-dir=/etc/dnsmasq.d,.rpmnew,.rpmsave,.rpmorig"),
   require => Package['dnsmasq']
 }
--> service => {"dnsmasq":
+-> service {"dnsmasq":
   ensure => 'running',
   enable => 'true'
 }
