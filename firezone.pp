@@ -182,6 +182,6 @@ conf-dir=/etc/dnsmasq.d,.rpmnew,.rpmsave,.rpmorig"),
   enable => 'true'
 }
 -> exec {"set resolv to dnsmasq":
-  command => "/usr/bin/sed -E '0,/nameserver/{s/^(nameserver.*)/nameserver ${facts['networking']['wg-firezone']}\\n\\1/}' /etc/resolv.conf",
-  unless  => "/usr/bin/grep 'nameserver ${facts['networking']['wg-firezone']}' /etc/resolv.conf"
+  command => "/usr/bin/sed -E '0,/nameserver/{s/^(nameserver.*)/nameserver ${facts['networking']['wg-firezone']['ip']}\\n\\1/}' /etc/resolv.conf",
+  unless  => "/usr/bin/grep 'nameserver ${facts['networking']['wg-firezone']['ip']}' /etc/resolv.conf"
 }
