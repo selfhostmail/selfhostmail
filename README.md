@@ -100,15 +100,15 @@ If you choose to go the named self-hosting route, be aware you'll need to setup 
 
 ### Firezone
 
-Firezone uses the letsencrypt certs for nginx and tls. The embedded nginx/postgresql from their project is disabled and this uses your systems postgres/nginx that is configured with this puppet module.
+Firezone uses the letsencrypt certs for nginx and tls. The embedded nginx/postgresql from their project is disabled and this uses your systems postgres/nginx that is configured with this puppet module. dnsmasq is enabled and listening on the wireguard ip for wireguard clients to use.
 
 ### Headscale
 
-Headscale uses the letsencrypt cert and nginx and exposes a local DERP/STUN server. Its untested but seemed to work...
+Headscale uses the letsencrypt cert and nginx and exposes a local DERP/STUN server. Its untested but seemed to work. I had plans to use this but changed my mind and decided to just leave the switches in place, if you use it or fix it please send patches :)
 
 ## wireguard client
 
-The current support is very basic and requires a wg0.conf file to be placed in /root prior to the script being run, assuming you've generated this ahead of time on your wireguard service.
+The current support is very basic and requires a wg0.conf file to be placed in /root prior to the script being run, assuming you've generated this ahead of time on your wireguard service. It will use the dnsmasq service that is installed on your firezone host.
 
 ## TODO
 
@@ -168,7 +168,7 @@ I didn't write any of the upstream packages here but am happy to use them and am
 Myself, I don't run the wireguard ingress on my mail server anymore, so I have a bootstrap problem. So here are 'in a nutshell' the steps I take. Most of this is done in terraform so its more or less automatic ish.
 
 1. Provision with your cloud provider using your registrar DNS a host with an FQDN of door.primary.com.
-2. Ensure there is at least temporarily an @ record for primary.com pointed at door.primary.com, keeping the TTL at 120 or less.
+2. Ensure there is at least temporarily an @ record for primary.com pointed at door.primary.com, keeping the TTL at 120 or less for sanity and less waiting.
 3. Clone the repo and run with no changes the command `./puppet-domain.sh -a false -d false -f true -l change@letsencrypt.org -m primary.org`
 4. Initialize the firezone user and create a new device with a new wireguard client config.
 5. Provision with your cloud provider using their DNS a host with an FQDN of mail.primary.com and switch the @ record over.
@@ -176,6 +176,7 @@ Myself, I don't run the wireguard ingress on my mail server anymore, so I have a
 7. Run the command `./puppet-domain.sh -a true -c true -d true -l change@letsencrypt.org -m primary.org`
 7. Go over to your registrar and ensure the nameservers are pointed at your cloud provider, then add the appropriate glue records for the primary.org domain.
 8. Ensure that on all the other domains the nameservers are just pointed directly at your new nameservers (and the freedns.afraig.org secondard backups).
+9. Add the DS records from /root/DS_FOR_REGISTRAR_<domains> to your registrar for each domain to finalize the dnssec chain of trust
 
-Now you can create a new client for your personal device and setup IMAP access. Note that you'll have to use the internal wireguard IP address at this time.
+Now you can create a new client in firezone for your personal device and setup IMAP access. Note that you'll have to use the internal wireguard IP address at this time.
 

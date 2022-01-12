@@ -178,7 +178,7 @@ class { 'postfix':
     -o smtpd_client_restrictions=permit_mynetworks,reject
     -o smtpd_helo_restrictions=
     -o smtpd_sender_restrictions=
-    -o smtpd_recipient_restrictions=permit_sasl_autheticated,permit_mynetworks,reject
+    -o smtpd_recipient_restrictions=permit_mynetworks,permit_sasl_authenticated,reject
     -o smtpd_end_of_data_restrictions=
     -o smtpd_error_sleep_time=0
     -o smtpd_soft_error_limit=1001
@@ -408,8 +408,36 @@ class { 'dovecot':
       "default_pass_scheme" => "MD5-CRYPT",
       "password_query" => "SELECT email as user, password FROM virtual_users WHERE email='%u';",
       "user_query" => "SELECT '/var/mail/vmail/' || maildir AS home, 1900 as uid, 1900 as gid, quota FROM virtual_users  WHERE email = '%u'"
-    }
+    },
+    'mailbox-maps.conf' => {
+      additional_content => 'namespace inbox {
+  inbox = yes
+  separator = /
+
+  mailbox "Drafts" {
+    auto = subscribe
+    special_use = \Drafts
   }
+  mailbox "Sent" {
+    auto = subscribe
+    special_use = \Sent
+  }
+  mailbox "Trash" {
+    auto = subscribe
+    special_use = \Trash
+  }
+  mailbox "Junk" {
+    auto = subscribe
+    special_use = \Junk
+  }
+  mailbox "Archive" {
+    auto = subscribe
+    special_use = \Archive
+  }
+}
+',
+    },
+  },
 }
 
 file {'/var/mail/vmail':
