@@ -90,6 +90,10 @@ A convenience script is provided to manage users and virtual domains. See ./pfad
 
 Currently this setup does NOT add the domains to the virtual_domains table. You can do this manually for any additional domains with 'vmailctl.sh -c addvdomain -d example.com'. Make sure to add the 'abuse' and 'postmaster' aliases.
 
+After installation its highly recommended to do things like make firezone nginx only listen on its wireguard IP, set firezone default DNS to firezone since its running dnsmasq, remove all services from firewall on your firezone server, set ssh to a non-standard port if its public, disable http if not in use.
+
+Running the script will undo some of these things since the ports are required. See TODO below.
+
 # Further Information
 
 ## Self-hosting DNS
@@ -117,6 +121,7 @@ The current support is very basic and requires a wg0.conf file to be placed in /
 * dnsmasq or unbound or something to manage the wireguard clients and a script to keep it up-to-date
 * Make the password fields between the firezone and postfix DB tables be synchronized since they support the same password format! That would be cool.
 * Allow for an external postgresql definition for either firezone or postfix/dovecot
+* Post-install script for 'securing' the things we opened for installation to work properly (http fw rule, change ssh port, etc)
 
 ## IN PROGRESS
 
