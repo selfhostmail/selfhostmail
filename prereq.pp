@@ -125,12 +125,16 @@ class { '::logwatch':
   service   => [ 'All' ],
 }
 
+# Get the various IPs we have enabled into a whitelist
 $dns_secondary = split($facts['dns_secondary_list'], ',')
-
-$local_whitelist = ['127.0.0.1'] + $dns_secondary
-
+if $facts['wg_client_enabled'] or $facts['firezone_enabled'] {
+  $local_whitelist = [ '127.0.0.1/8', '10.3.2.0/24' ] + $dns_secondary
+}
+else {
+  $local_whitelist = [ '127.0.0.1/8' ] + $dns_secondary
+}
 if $facts['freedns_secondary'] == 'true' {
-  $whitelist = $local_whitelist + ['69.65.50.192']
+  $whitelist = $local_whitelist + [ '69.65.50.192' ]
 }
 else {
   $whitelist = $local_whitelist
@@ -160,6 +164,24 @@ class {'fail2ban':
   jails                => $jails,
   whitelist            => $whitelist
 }
+-> file {'/etc/fail2ban/action.d/custom-firewalld.conf':
+  ensure => file,
+  content => "
+[INCLUDES]
+before  =
+
+[Definition]
+actionstart =
+actionstop =
+actioncheck =
+
+actionflush = sed -i '/<source address=/d' /etc/firewalld/zones/drop.xml
+actionban = firewall-cmd --change-source=<ip> --zone=drop && firewall-cmd --change-source=<ip> --zone=drop --permanent
+actionunban = firewall-cmd --remove-source=<ip> --zone=drop && firewall-cmd --remove-source=<ip> --zone=drop --permanent || echo 0
+
+[Init]
+"
+  }
 ->
 exec {'hacky fail2ban requirement':
   command => "/usr/bin/touch /var/log/fail2ban.log && /usr/bin/systemctl restart fail2ban",
