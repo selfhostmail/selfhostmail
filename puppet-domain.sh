@@ -2,7 +2,8 @@
 
 export FIRST_RUN=false
 export log_dir='/root/puppet_logs'
-export facter_pwd=`pwd`
+export exec_dir=$(pwd)
+export facter_pwd=$exec_dir
 
 mkdir -p ${log_dir}
 
@@ -34,7 +35,6 @@ usage() { echo -e "Usage:
 -u [true/false]\t\tRun zone updates on DNS, true first run, false after first run
 \n"; exit 1; }
 
-exec_dir=$(pwd)
 while getopts ":a:c:f:h:p:m:d:l:u:" o; do
     case "${o}" in
         p) admin_password=${OPTARG} ;;
@@ -95,30 +95,30 @@ export facter_admin_password=$(doveadm pw -s BLF-CRYPT -p ${admin_password})
 ### - run puppet
 
 step_print "${iverb} system pre-requisites (nginx/certs/spam/AV).."
-puppet apply -l ${log_dir}/build_log ${exec_dir}/prereq.pp
+puppet apply -l ${log_dir}/build_log ${exec_dir}/puppet/prereq.pp
 step_print "${iverb} postgres and setting up schemas and rights.."
-puppet apply -l ${log_dir}/build_log ${exec_dir}/database.pp
+puppet apply -l ${log_dir}/build_log ${exec_dir}/puppet/database.pp
 
 if [ $facter_wg_client_enabled == "true" ]; then
     step_print "${iverb} wireguard client service.."
-    puppet apply -l ${log_dir}/build_log ${exec_dir}/wg-client.pp
+    puppet apply -l ${log_dir}/build_log ${exec_dir}/puppet/wg-client.pp
 elif [ $facter_firezone_enabled == "true" ]; then
     step_print "${iverb} firezone wireguard services.."
-    puppet apply -l ${log_dir}/build_log ${exec_dir}/firezone.pp
+    puppet apply -l ${log_dir}/build_log ${exec_dir}/puppet/firezone.pp
 elif [ $facter_headscale_enabled == "true" ]; then
     step_print "${iverb} headscale wireguard services.."
-    puppet apply -l ${log_dir}/build_log ${exec_dir}/headscale.pp
+    puppet apply -l ${log_dir}/build_log ${exec_dir}/puppet/headscale.pp
 fi
 if [ $facter_mail_enable == 'true' ]; then
     step_print "${iverb} postfix/dovecot services and seeding initial tables.."
-    puppet apply -l ${log_dir}/build_log ${exec_dir}/postfix.pp
+    puppet apply -l ${log_dir}/build_log ${exec_dir}/puppet/postfix.pp
 fi
 if [ $facter_dns_enable == 'true' ]; then
     step_print "${iverb} bind9 and setting up keys.."
     if [ $facter_update_dns == 'false' ]; then
         step_print "Skipping, not updating named...."
     else
-        puppet apply -l ${log_dir}/build_log ${exec_dir}/dns.pp
+        puppet apply -l ${log_dir}/build_log ${exec_dir}/puppet/dns.pp
     fi
 fi
 
