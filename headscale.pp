@@ -11,7 +11,7 @@ exec {'extract golang':
 }
 selinux::module { 'derp-profile':
   ensure    => 'present',
-  source_te => '/root/selfhostmail/derp-profile.te',
+  source_te => "${facts['pwd']}/derp-profile.te",
 }
 exec {'install derp':
   environment => [ 'GOPATH=/opt/headscale', 'HOME=/opt/headscale', 'GOCACHE=/opt/headscale' ],

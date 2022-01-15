@@ -121,7 +121,7 @@ if $facts['mail_enable'] == 'true' {
   }
   selinux::module { 'spamd-profile':
     ensure    => 'present',
-    source_te => '/root/selfhostmail/spamd-profile.te',
+    source_te => "${facts['pwd']}/spamd-profile.te",
   }
   exec {'amavis - domain':
     command => "/usr/bin/sed -i \"s/^\\\$mydomain = '.*/\\\$mydomain = '${facts['my_domain']}';/\" /etc/amavisd/amavisd.conf; /usr/bin/sed -i \"s/^# \\\$myhostname = '.*/\\\$myhostname = '${facts['fqdn']}';/\" /etc/amavisd/amavisd.conf;",
@@ -266,5 +266,5 @@ if $facts['firezone_enabled'] =='true' or $facts['headscale_enabled'] == 'true' 
 
 selinux::module { 'logrotate-profile':
   ensure    => 'present',
-  source_te => '/root/selfhostmail/logrotate-profile.te',
+  source_te => "${facts['pwd']}/logrotate-profile.te",
 }

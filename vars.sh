@@ -3,6 +3,7 @@
 ## CHANGE THESE!!!!!!!!! REALLY!
 # Lets Encrypt Email, must be real and active!
 #export facter_le_email='your_real_email@for_lets_encrypt.com'
+
 export facter_le_email=''
 # Your primary domain of which your fqdn is most likely a part.
 export facter_my_domain='example.org'

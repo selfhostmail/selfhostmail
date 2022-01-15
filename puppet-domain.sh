@@ -2,6 +2,8 @@
 
 export FIRST_RUN=false
 export log_dir='/root/puppet_logs'
+export facter_pwd=`pwd`
+
 mkdir -p ${log_dir}
 
 iverb='Re-configuring'

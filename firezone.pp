@@ -8,13 +8,13 @@ $remote_file="https://github.com/firezone/firezone/releases/download/${version}/
 $my_other_domain_list=split("${facts['my_other_domains']}", ',')
 $my_domains = $my_other_domain_list + $facts['my_domain']
 
-file { "/root/${filename}":
+file { "/tmp/${filename}":
   source => $remote_file,
 }
 exec { "install firezone":
-  command     => "/usr/bin/dnf --assumeyes --quiet install /root/${filename}",
+  command     => "/usr/bin/dnf --assumeyes --quiet install /tmp/${filename}",
   unless      => "/usr/bin/rpm -qa | /usr/bin/grep firezone-${version}",
-  require     => File["/root/${filename}"]
+  require     => File["/tmp/${filename}"]
 }
 -> exec {"boostrap firezon":
   command     => "/usr/bin/firezone-ctl reconfigure",
