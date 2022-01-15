@@ -37,6 +37,7 @@ service {'spamass-milter':
   enable => 'true',
   ensure => 'running',
 }
+
 ## Setup Razor ant home dirs
 exec { 'setup razor home':
   command => '/usr/bin/razor-admin -home /var/lib/razor -create; /usr/bin/razor-admin -home /var/lib/razor -discover; /usr/bin/razor-admin -home /var/lib/razor -register',
@@ -438,6 +439,11 @@ class { 'dovecot':
 ',
     },
   },
+}
+
+selinux::module { 'dovecot-virtual':
+  ensure    => 'present',
+  source_te => '/root/selfhostmail/dovecot-virtual.te',
 }
 
 file {'/var/mail/vmail':

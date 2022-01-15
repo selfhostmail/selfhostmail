@@ -1,0 +1,12 @@
+
+module postfix-virtual 1.0;
+
+require {
+        type krb5_keytab_t;
+        type postfix_virtual_t;
+
+        class dir { search };
+}
+
+#============= postfix ==============
+allow postfix_virtual_t krb5_keytab_t:dir search;

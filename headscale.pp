@@ -9,6 +9,10 @@ exec {'extract golang':
   command => "/usr/bin/rm -rf /usr/local/go && /usr/bin/tar -C /usr/local -xzf /tmp/go1.17.6.linux-amd64.tar.gz",
   refreshonly => true
 }
+selinux::module { 'derp-profile':
+  ensure    => 'present',
+  source_te => '/root/selfhostmail/derp-profile.te',
+}
 exec {'install derp':
   environment => [ 'GOPATH=/opt/headscale', 'HOME=/opt/headscale', 'GOCACHE=/opt/headscale' ],
   command => '/usr/local/go/bin/go install tailscale.com/cmd/derper@main',

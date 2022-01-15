@@ -1,0 +1,17 @@
+
+module logrotate-profile 1.0;
+
+require {
+        type logrotate_t;
+        type unlabeled_t;
+        type var_t;
+
+        class dir { search read };
+        class file { getattr open read write map lock };
+}
+
+
+#============= logrotate ==============
+allow logrotate_t unlabeled_t:file { read getattr };
+allow logrotate_t var_t:file { read getattr open write map lock };
+allow logrotate_t var_t:dir { read search };

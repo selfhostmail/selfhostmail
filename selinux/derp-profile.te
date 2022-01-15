@@ -1,0 +1,12 @@
+
+module derp-profile 1.0;
+
+require {
+        type init_t;
+        type user_tmp_t;
+
+        class file { execute execute_no_trans map };
+}
+
+#============= derp ==============
+allow init_t user_tmp_t:file { execute execute_no_trans map };

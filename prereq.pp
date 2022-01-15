@@ -1,3 +1,6 @@
+# Notes, all firewall things are here because not everything runs on every update and we've set purge firewall ports to true.
+# If you move the mail/dns firewall checks back to mail/dns they may get purged here then NOT applied there, so leave them here.
+#
 # 1. Update, enable EL,epel,powertools repos and install dependencies
 # 2. Setup neofetch so we know if we need to reboot on login
 # 3. Setup automatic updates
@@ -103,11 +106,10 @@ exec {'disable tuned':
   notify  => Exec['stop tuned']
 }
 -> exec {'stop tuned':
-  command => "/usr/bin/systemctl stop tuned",
+  command => "/usr/bin/systemctl restart tuned",
   refreshonly => true
 }
 
-# Clamav is a serious memory hog
 if $facts['mail_enable'] == 'true' {
   class { 'clamav':
     manage_clamd      => true,
@@ -116,6 +118,23 @@ if $facts['mail_enable'] == 'true' {
       'MaxScanSize' => '500M',
       'MaxFileSize' => '150M',
     },
+  }
+  selinux::module { 'spamd-profile':
+    ensure    => 'present',
+    source_te => '/root/selfhostmail/spamd-profile.te',
+  }
+  exec {'amavis - domain':
+    command => "/usr/bin/sed -i \"s/^\\\$mydomain = '.*/\\\$mydomain = '${facts['my_domain']}';/\" /etc/amavisd/amavisd.conf; /usr/bin/sed -i \"s/^# \\\$myhostname = '.*/\\\$myhostname = '${facts['fqdn']}';/\" /etc/amavisd/amavisd.conf;",
+    unless  => "/usr/bin/grep \"\\\$mydomain = '${facts['my_domain']}'\" /etc/amavisd/amavisd.conf"
+  }
+  -> exec {'amavis - virus check':
+    command => '/usr/bin/sed -i "s/^# @bypass_virus_checks_maps/@bypass_virus_checks_maps/" /etc/amavisd/amavisd.conf',
+    unless  => '/usr/bin/grep "^@bypass_virus_checks_map" /etc/amavisd/amavisd.conf',
+    notify  => Service['amavisd']
+  }
+  service {'amavisd':
+    enable  => true,
+    ensure  => running
   }
 }
 
@@ -187,44 +206,6 @@ exec {'hacky fail2ban requirement':
   command => "/usr/bin/touch /var/log/fail2ban.log && /usr/bin/systemctl restart fail2ban",
   unless  => "/usr/bin/test -e /var/log/fail2ban.log"
 }
-if $facts['mail_enable'] == 'true' {
-  exec {'amavis - domain':
-    command => "/usr/bin/sed -i \"s/^\\\$mydomain = '.*/\\\$mydomain = '${facts['my_domain']}';/\" /etc/amavisd/amavisd.conf; /usr/bin/sed -i \"s/^# \\\$myhostname = '.*/\\\$myhostname = '${facts['fqdn']}';/\" /etc/amavisd/amavisd.conf;",
-    unless  => "/usr/bin/grep \"\\\$mydomain = '${facts['my_domain']}'\" /etc/amavisd/amavisd.conf"
-  }
-  -> exec {'amavis - virus check':
-    command => '/usr/bin/sed -i "s/^# @bypass_virus_checks_maps/@bypass_virus_checks_maps/" /etc/amavisd/amavisd.conf',
-    unless  => '/usr/bin/grep "^@bypass_virus_checks_map" /etc/amavisd/amavisd.conf',
-    notify  => Service['amavisd']
-  }
-  service {'amavisd':
-    enable  => true,
-    ensure  => running
-  }
-  firewalld_service { 'Allow smtp from the external zone':
-    ensure  => 'present',
-    service => 'smtp',
-    zone    => 'public',
-  }
-}
-
-if $facts['dns_enabled'] {
-  firewalld_port { 'Allow 53/udp from the external zone':
-    ensure   => 'present',
-    port     => '53',
-    protocol => 'udp'
-    zone     => 'public',
-  }
-  firewalld_port { 'Allow 53/tcp from the external zone':
-    ensure   => 'present',
-    port     => '53',
-    protocol => 'tcp'
-    zone     => 'public',
-  }
-}
-
-
-
 -> nginx::resource::server{"${facts['fqdn']}-80":
   www_root    => '/usr/share/nginx/html/',
   server_name => [ $facts['fqdn'], $facts['my_domain'] ]
@@ -253,9 +234,37 @@ exec {'daemon-reload':
   require => Class['nginx'],
 }
 
+if $facts['mail_enable'] == 'true' {
+
+  firewalld_service { 'Allow smtp from the external zone':
+    ensure  => 'present',
+    service => 'smtp',
+    zone    => 'public',
+  }
+}
+if $facts['dns_enable'] {
+  firewalld_port { 'Allow 53/udp from the external zone':
+    ensure   => 'present',
+    port     => '53',
+    protocol => 'udp'
+    zone     => 'public',
+  }
+  firewalld_port { 'Allow 53/tcp from the external zone':
+    ensure   => 'present',
+    port     => '53',
+    protocol => 'tcp'
+    zone     => 'public',
+  }
+}
+
 if $facts['firezone_enabled'] =='true' or $facts['headscale_enabled'] == 'true' {
   selinux::boolean { 'httpd_can_network_connect': }
 
   # Required for silent logs but disable if you don't trust nginx to set ratelimiting on its port
   selinux::boolean { 'httpd_setrlimit': }
+}
+
+selinux::module { 'logrotate-profile':
+  ensure    => 'present',
+  source_te => '/root/selfhostmail/logrotate-profile.te',
 }

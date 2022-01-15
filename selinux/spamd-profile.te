@@ -1,0 +1,14 @@
+
+module spamd-profile 1.0;
+
+require {
+        type spamd_t;
+        type var_lib_t;
+
+        class dir { search write read };
+        class lnk_file { read write getattr };
+}
+
+#============= spamd ==============
+allow spamd_t var_lib_t:lnk_file { getattr read write };
+allow spamd_t var_lib_t:dir { write read search };

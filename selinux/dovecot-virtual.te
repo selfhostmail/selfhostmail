@@ -1,0 +1,13 @@
+
+module dovecot-virtual 1.0;
+
+require {
+        type dovecot_auth_t;
+        type postgresql_port_t;
+
+        class tcp_socket name_connect;
+}
+
+#============= dovecot ==============
+allow dovecot_auth_t postgresql_port_t:tcp_socket name_connect;
+
